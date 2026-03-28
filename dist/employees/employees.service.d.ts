@@ -4,15 +4,18 @@ import { CareerHistory } from './entities/career-history.entity';
 import { HRDocument } from './entities/hr-document.entity';
 import { Department } from '../departments/entities/department.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmployeeUpdateRequest } from './entities/employee-update-request.entity';
 import { AuditService } from '../audit/audit.service';
+import { User } from '../users/entities/user.entity';
 export declare class EmployeesService {
     private employeesRepository;
     private careerHistoryRepository;
     private hrDocumentRepository;
     private departmentRepository;
+    private updateRequestsRepository;
     private notificationsService;
     private auditService;
-    constructor(employeesRepository: Repository<Employee>, careerHistoryRepository: Repository<CareerHistory>, hrDocumentRepository: Repository<HRDocument>, departmentRepository: Repository<Department>, notificationsService: NotificationsService, auditService: AuditService);
+    constructor(employeesRepository: Repository<Employee>, careerHistoryRepository: Repository<CareerHistory>, hrDocumentRepository: Repository<HRDocument>, departmentRepository: Repository<Department>, updateRequestsRepository: Repository<EmployeeUpdateRequest>, notificationsService: NotificationsService, auditService: AuditService);
     create(createEmployeeDto: Partial<Employee>): Promise<Employee>;
     findAll(): Promise<Employee[]>;
     findOne(id: string): Promise<Employee>;
@@ -22,5 +25,10 @@ export declare class EmployeesService {
     private calculateAnnualSalary;
     findByEmployeeCode(code: string): Promise<Employee | null>;
     findByUserId(userId: string): Promise<Employee | null>;
+    createUpdateRequest(userId: string, data: Partial<EmployeeUpdateRequest>): Promise<EmployeeUpdateRequest>;
+    findAllUpdateRequests(): Promise<EmployeeUpdateRequest[]>;
+    findUserUpdateRequests(userId: string): Promise<EmployeeUpdateRequest[]>;
+    approveUpdateRequest(id: string, admin: User): Promise<EmployeeUpdateRequest>;
+    rejectUpdateRequest(id: string, reason: string): Promise<EmployeeUpdateRequest>;
     private cleanEmptyStrings;
 }

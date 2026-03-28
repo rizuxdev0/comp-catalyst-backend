@@ -15,4 +15,9 @@ export declare class EmployeesController {
     addCareerHistory(id: string, data: any): Promise<import("./entities/career-history.entity").CareerHistory[]>;
     findDocuments(id: string): Promise<import("./entities/hr-document.entity").HRDocument[]>;
     addDocument(id: string, data: any): Promise<import("./entities/hr-document.entity").HRDocument>;
+    createUpdateRequest(req: any, data: any): Promise<import("./entities/employee-update-request.entity").EmployeeUpdateRequest>;
+    findMyUpdateRequests(req: any): Promise<import("./entities/employee-update-request.entity").EmployeeUpdateRequest[]>;
+    findAllUpdateRequests(): Promise<import("./entities/employee-update-request.entity").EmployeeUpdateRequest[]>;
+    approveUpdateRequest(id: string, req: any): Promise<import("./entities/employee-update-request.entity").EmployeeUpdateRequest>;
+    rejectUpdateRequest(id: string, reason: string): Promise<import("./entities/employee-update-request.entity").EmployeeUpdateRequest>;
 }

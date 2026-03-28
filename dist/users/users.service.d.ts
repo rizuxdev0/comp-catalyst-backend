@@ -37,6 +37,10 @@ export declare class UsersService implements OnModuleInit {
     revokeUserExtraPermission(userId: string, permissionId: string): Promise<void>;
     findOne(id: string): Promise<User>;
     getEffectivePermissions(userId: string): Promise<string[]>;
+    update(id: string, updateData: Partial<User>): Promise<User>;
+    changePassword(userId: string, newPassword: string): Promise<{
+        message: string;
+    }>;
     updateRole(userId: string, roleCode: AppRole): Promise<UserRole>;
     remove(id: string): Promise<void>;
     updateResetToken(userId: string, token: string, expires: Date): Promise<void>;

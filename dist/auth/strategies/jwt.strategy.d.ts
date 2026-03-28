@@ -8,6 +8,25 @@ export declare class JwtStrategy extends JwtStrategy_base {
     private configService;
     private usersService;
     constructor(configService: ConfigService, usersService: UsersService);
-    validate(payload: any): Promise<import("../../users/entities/user.entity").User>;
+    validate(payload: any): Promise<{
+        permissions: string[];
+        id: string;
+        email: string;
+        passwordHash: string;
+        firstName: string;
+        lastName: string;
+        isActive: boolean;
+        emailVerified: boolean;
+        mustChangePassword: boolean;
+        passwordStatus: import("../../users/entities/user.entity").PasswordStatus;
+        temporaryPasswordExpiresAt: Date;
+        lastLoginAt: Date;
+        createdAt: Date;
+        updatedAt: Date;
+        extraPermissions: string[];
+        resetPasswordToken: string;
+        resetPasswordExpiresAt: Date;
+        roles: import("../../users/entities/user-role.entity").UserRole[];
+    }>;
 }
 export {};

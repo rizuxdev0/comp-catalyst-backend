@@ -34,10 +34,22 @@ export class UsersController {
     return this.usersService.updateRole(id, role);
   }
 
-  @Delete(':id')
+  @Patch(':id')
   @Roles(AppRole.ADMIN)
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Patch('profile/me')
+  @ApiOperation({ summary: 'Update own profile' })
+  updateProfile(@Req() req, @Body() data: any) {
+    return this.usersService.update(req.user.id, data);
+  }
+
+  @Patch('profile/change-password')
+  @ApiOperation({ summary: 'Change own password' })
+  changePassword(@Req() req, @Body() data: any) {
+    return this.usersService.changePassword(req.user.id, data.newPassword);
   }
 }

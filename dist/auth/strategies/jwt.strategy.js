@@ -30,7 +30,8 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         if (!user || !user.isActive) {
             throw new common_1.UnauthorizedException('User inactive or not found');
         }
-        return user;
+        const permissions = await this.usersService.getEffectivePermissions(user.id);
+        return { ...user, permissions };
     }
 };
 exports.JwtStrategy = JwtStrategy;

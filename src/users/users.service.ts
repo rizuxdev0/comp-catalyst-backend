@@ -8,6 +8,7 @@ import { Permission } from './entities/permission.entity';
 import { UserExtraPermission } from './entities/user-extra-permission.entity';
 import { RolePermission } from './entities/role-permission.entity';
 import { Employee } from '../employees/entities/employee.entity';
+import { PasswordStatus } from './entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 import { AuditService } from '../audit/audit.service';
 
@@ -80,16 +81,36 @@ export class UsersService implements OnModuleInit {
   }
 
   private async seedRolePermissions() {
-    const count = await this.rolePermissionsRepository.count();
-    if (count > 0) return;
-
-    console.log('Seeding default role permissions...');
+    console.log('Synchronizing default role permissions...');
     const all = await this.findAllPermissions();
-    const admin = all.map(p => ({ role: 'admin', permissionCode: p.code }));
-    const manager = all.filter(p => !p.code.includes('.delete') && !p.code.includes('settings.')).map(p => ({ role: 'manager', permissionCode: p.code }));
-    const employee = all.filter(p => p.module === 'portal').map(p => ({ role: 'employee', permissionCode: p.code }));
+    
+    // Admin gets everything
+    const adminPerms = all.map(p => ({ role: 'admin', permissionCode: p.code }));
+    
+    // Manager gets mostly everything except destructive settings and management
+    const managerPerms = all.filter(p => 
+      !p.code.includes('.delete') && 
+      !p.code.includes('settings.') && 
+      !p.code.includes('permissions.')
+    ).map(p => ({ role: 'manager', permissionCode: p.code }));
+    
+    // Employee gets portal access and news
+    const employeePerms = all.filter(p => 
+      p.module === 'portal' || 
+      p.code === 'announcements.view' ||
+      p.code === 'search.use'
+    ).map(p => ({ role: 'employee', permissionCode: p.code }));
 
-    await this.rolePermissionsRepository.save([...admin, ...manager, ...employee]);
+    const allToSync = [...adminPerms, ...managerPerms, ...employeePerms];
+    
+    for (const rp of allToSync) {
+      const exists = await this.rolePermissionsRepository.findOneBy({ role: rp.role, permissionCode: rp.permissionCode });
+      if (!exists) {
+        await this.rolePermissionsRepository.save(this.rolePermissionsRepository.create(rp));
+      }
+    }
+    
+    console.log('Role Permissions Matrix Synchronized.');
   }
 
   private async seedPermissions() {
@@ -163,6 +184,8 @@ export class UsersService implements OnModuleInit {
       { code: 'hr_support.view', name: 'Voir support RH', module: 'hr_support' },
       { code: 'hr_support.manage', name: 'Gérer support RH', module: 'hr_support' },
       { code: 'search.use', name: 'Utiliser la recherche globale', module: 'search' },
+      { code: 'announcements.view', name: 'Voir les annonces', module: 'announcements' },
+      { code: 'announcements.manage', name: 'Gérer les annonces', module: 'announcements' },
     ];
 
     for (const p of permissions) {
@@ -390,6 +413,34 @@ export class UsersService implements OnModuleInit {
     });
 
     return Array.from(permissions);
+  }
+
+  async update(id: string, updateData: Partial<User>) {
+    await this.usersRepository.update(id, updateData);
+    const updated = await this.findOne(id);
+    await this.auditService.log({
+      action: 'update_profile',
+      entityType: 'user',
+      entityId: id,
+      entityName: updated.email,
+      newValues: updateData,
+    });
+    return updated;
+  }
+
+  async changePassword(userId: string, newPassword: string) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersRepository.update(userId, { 
+      passwordHash: hashedPassword,
+      passwordStatus: PasswordStatus.ACTIVE
+    });
+    await this.auditService.log({
+      action: 'change_password',
+      entityType: 'user',
+      entityId: userId,
+      entityName: 'Self-Service',
+    });
+    return { message: 'Password updated successfully' };
   }
 
   async updateRole(userId: string, roleCode: AppRole) {

@@ -90,4 +90,39 @@ export class EmployeesController {
   async addDocument(@Param('id') id: string, @Body() data: any) {
     return this.hrDocumentsService.create({ ...data, employeeId: id });
   }
+
+  // --- Update Requests ---
+
+  @Post('update-requests')
+  @ApiOperation({ summary: 'Submit an update request' })
+  async createUpdateRequest(@Request() req, @Body() data: any) {
+    return this.employeesService.createUpdateRequest(req.user.id, data);
+  }
+
+  @Get('update-requests/me')
+  @ApiOperation({ summary: 'Get current user update requests' })
+  async findMyUpdateRequests(@Request() req) {
+    return this.employeesService.findUserUpdateRequests(req.user.id);
+  }
+
+  @Roles(AppRole.ADMIN, AppRole.MANAGER)
+  @Get('update-requests/all')
+  @ApiOperation({ summary: 'Get all update requests (Admin)' })
+  async findAllUpdateRequests() {
+    return this.employeesService.findAllUpdateRequests();
+  }
+
+  @Roles(AppRole.ADMIN, AppRole.MANAGER)
+  @Patch('update-requests/:id/approve')
+  @ApiOperation({ summary: 'Approve an update request' })
+  async approveUpdateRequest(@Param('id') id: string, @Request() req) {
+    return this.employeesService.approveUpdateRequest(id, req.user);
+  }
+
+  @Roles(AppRole.ADMIN, AppRole.MANAGER)
+  @Patch('update-requests/:id/reject')
+  @ApiOperation({ summary: 'Reject an update request' })
+  async rejectUpdateRequest(@Param('id') id: string, @Body('reason') reason: string) {
+    return this.employeesService.rejectUpdateRequest(id, reason);
+  }
 }

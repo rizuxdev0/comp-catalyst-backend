@@ -62,6 +62,21 @@ let EmployeesController = class EmployeesController {
     async addDocument(id, data) {
         return this.hrDocumentsService.create({ ...data, employeeId: id });
     }
+    async createUpdateRequest(req, data) {
+        return this.employeesService.createUpdateRequest(req.user.id, data);
+    }
+    async findMyUpdateRequests(req) {
+        return this.employeesService.findUserUpdateRequests(req.user.id);
+    }
+    async findAllUpdateRequests() {
+        return this.employeesService.findAllUpdateRequests();
+    }
+    async approveUpdateRequest(id, req) {
+        return this.employeesService.approveUpdateRequest(id, req.user);
+    }
+    async rejectUpdateRequest(id, reason) {
+        return this.employeesService.rejectUpdateRequest(id, reason);
+    }
 };
 exports.EmployeesController = EmployeesController;
 __decorate([
@@ -151,6 +166,51 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], EmployeesController.prototype, "addDocument", null);
+__decorate([
+    (0, common_1.Post)('update-requests'),
+    (0, swagger_1.ApiOperation)({ summary: 'Submit an update request' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], EmployeesController.prototype, "createUpdateRequest", null);
+__decorate([
+    (0, common_1.Get)('update-requests/me'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get current user update requests' }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EmployeesController.prototype, "findMyUpdateRequests", null);
+__decorate([
+    (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN, user_role_entity_1.AppRole.MANAGER),
+    (0, common_1.Get)('update-requests/all'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all update requests (Admin)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], EmployeesController.prototype, "findAllUpdateRequests", null);
+__decorate([
+    (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN, user_role_entity_1.AppRole.MANAGER),
+    (0, common_1.Patch)('update-requests/:id/approve'),
+    (0, swagger_1.ApiOperation)({ summary: 'Approve an update request' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], EmployeesController.prototype, "approveUpdateRequest", null);
+__decorate([
+    (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN, user_role_entity_1.AppRole.MANAGER),
+    (0, common_1.Patch)('update-requests/:id/reject'),
+    (0, swagger_1.ApiOperation)({ summary: 'Reject an update request' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('reason')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], EmployeesController.prototype, "rejectUpdateRequest", null);
 exports.EmployeesController = EmployeesController = __decorate([
     (0, swagger_1.ApiTags)('employees'),
     (0, swagger_1.ApiBearerAuth)(),

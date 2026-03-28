@@ -7,4 +7,8 @@ export declare class UsersController {
     create(userData: any): Promise<import("./entities/user.entity").User>;
     updateRole(id: string, role: AppRole): Promise<import("./entities/user-role.entity").UserRole>;
     remove(id: string): Promise<void>;
+    updateProfile(req: any, data: any): Promise<import("./entities/user.entity").User>;
+    changePassword(req: any, data: any): Promise<{
+        message: string;
+    }>;
 }

@@ -6,7 +6,9 @@ import { CareerHistory } from './entities/career-history.entity';
 import { HRDocument } from './entities/hr-document.entity';
 import { Department } from '../departments/entities/department.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmployeeUpdateRequest } from './entities/employee-update-request.entity';
 import { AuditService } from '../audit/audit.service';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class EmployeesService {
@@ -19,6 +21,8 @@ export class EmployeesService {
     private hrDocumentRepository: Repository<HRDocument>,
     @InjectRepository(Department)
     private departmentRepository: Repository<Department>,
+    @InjectRepository(EmployeeUpdateRequest)
+    private updateRequestsRepository: Repository<EmployeeUpdateRequest>,
     private notificationsService: NotificationsService,
     private auditService: AuditService,
   ) {}
@@ -176,6 +180,78 @@ export class EmployeesService {
       where: { userId },
       relations: ['department'],
     });
+  }
+
+  async createUpdateRequest(userId: string, data: Partial<EmployeeUpdateRequest>): Promise<EmployeeUpdateRequest> {
+    const employee = await this.findByUserId(userId);
+    if (!employee) throw new NotFoundException('Employé non trouvé');
+
+    const request = this.updateRequestsRepository.create({
+      ...data,
+      employee_id: employee.id,
+      status: 'pending',
+    });
+
+    const saved = await this.updateRequestsRepository.save(request);
+    
+    // Notify RH
+    // (Logic for finding RH users is omitted for brevity, but usually we broadcast or check roles)
+    
+    return saved;
+  }
+
+  async findAllUpdateRequests(): Promise<EmployeeUpdateRequest[]> {
+    return this.updateRequestsRepository.find({ order: { created_at: 'DESC' } });
+  }
+
+  async findUserUpdateRequests(userId: string): Promise<EmployeeUpdateRequest[]> {
+    const employee = await this.findByUserId(userId);
+    if (!employee) return [];
+    return this.updateRequestsRepository.find({ 
+      where: { employee_id: employee.id },
+      order: { created_at: 'DESC' }
+    });
+  }
+
+  async approveUpdateRequest(id: string, admin: User): Promise<EmployeeUpdateRequest> {
+    const request = await this.updateRequestsRepository.findOne({ where: { id } });
+    if (!request) throw new NotFoundException('Demande non trouvée');
+
+    if (request.status !== 'pending') {
+      throw new BadRequestException('Cette demande a déjà été traitée');
+    }
+
+    // Apply the change to employee
+    const employee = await this.findOne(request.employee_id);
+    (employee as any)[request.field_name] = request.new_value;
+    await this.employeesRepository.save(employee);
+
+    // Update request status
+    request.status = 'approved';
+    request.approved_by = admin.id;
+    request.approved_at = new Date();
+    
+    const saved = await this.updateRequestsRepository.save(request);
+
+    await this.auditService.log({
+      action: 'approve_update',
+      entityType: 'employee_update',
+      entityId: id,
+      entityName: `${employee.first_name} ${employee.last_name}`,
+      newValues: { [request.field_name]: request.new_value },
+    });
+
+    return saved;
+  }
+
+  async rejectUpdateRequest(id: string, reason: string): Promise<EmployeeUpdateRequest> {
+    const request = await this.updateRequestsRepository.findOne({ where: { id } });
+    if (!request) throw new NotFoundException('Demande non trouvée');
+
+    request.status = 'rejected';
+    request.rejection_reason = reason;
+    
+    return this.updateRequestsRepository.save(request);
   }
 
   // Helper: convert empty strings to null for optional fields

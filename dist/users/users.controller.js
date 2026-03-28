@@ -36,6 +36,12 @@ let UsersController = class UsersController {
     remove(id) {
         return this.usersService.remove(id);
     }
+    updateProfile(req, data) {
+        return this.usersService.update(req.user.id, data);
+    }
+    changePassword(req, data) {
+        return this.usersService.changePassword(req.user.id, data.newPassword);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -66,7 +72,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateRole", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
+    (0, common_1.Patch)(':id'),
     (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Delete user (Admin only)' }),
     __param(0, (0, common_1.Param)('id')),
@@ -74,6 +80,24 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Patch)('profile/me'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update own profile' }),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Patch)('profile/change-password'),
+    (0, swagger_1.ApiOperation)({ summary: 'Change own password' }),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "changePassword", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('users'),
     (0, common_1.Controller)('users'),

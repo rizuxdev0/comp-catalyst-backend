@@ -41,6 +41,7 @@ import { HolidayPlanModule } from './holiday-plan/holiday-plan.module';
 import { HolidayPlan } from './holiday-plan/entities/holiday-plan.entity';
 import { HrDocumentsModule } from './hr-documents/hr-documents.module';
 import { SearchModule } from './search/search.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -100,7 +101,8 @@ import { SearchModule } from './search/search.module';
     PositionsModule,
     HolidayPlanModule,
     HrDocumentsModule,
-    SearchModule
+    SearchModule,
+    AnnouncementsModule
   ],
   controllers: [],
   providers: [],

@@ -23,6 +23,7 @@ const permission_entity_1 = require("./entities/permission.entity");
 const user_extra_permission_entity_1 = require("./entities/user-extra-permission.entity");
 const role_permission_entity_1 = require("./entities/role-permission.entity");
 const employee_entity_1 = require("../employees/entities/employee.entity");
+const user_entity_2 = require("./entities/user.entity");
 const bcrypt = require("bcryptjs");
 const audit_service_1 = require("../audit/audit.service");
 let UsersService = class UsersService {
@@ -78,15 +79,23 @@ let UsersService = class UsersService {
         }
     }
     async seedRolePermissions() {
-        const count = await this.rolePermissionsRepository.count();
-        if (count > 0)
-            return;
-        console.log('Seeding default role permissions...');
+        console.log('Synchronizing default role permissions...');
         const all = await this.findAllPermissions();
-        const admin = all.map(p => ({ role: 'admin', permissionCode: p.code }));
-        const manager = all.filter(p => !p.code.includes('.delete') && !p.code.includes('settings.')).map(p => ({ role: 'manager', permissionCode: p.code }));
-        const employee = all.filter(p => p.module === 'portal').map(p => ({ role: 'employee', permissionCode: p.code }));
-        await this.rolePermissionsRepository.save([...admin, ...manager, ...employee]);
+        const adminPerms = all.map(p => ({ role: 'admin', permissionCode: p.code }));
+        const managerPerms = all.filter(p => !p.code.includes('.delete') &&
+            !p.code.includes('settings.') &&
+            !p.code.includes('permissions.')).map(p => ({ role: 'manager', permissionCode: p.code }));
+        const employeePerms = all.filter(p => p.module === 'portal' ||
+            p.code === 'announcements.view' ||
+            p.code === 'search.use').map(p => ({ role: 'employee', permissionCode: p.code }));
+        const allToSync = [...adminPerms, ...managerPerms, ...employeePerms];
+        for (const rp of allToSync) {
+            const exists = await this.rolePermissionsRepository.findOneBy({ role: rp.role, permissionCode: rp.permissionCode });
+            if (!exists) {
+                await this.rolePermissionsRepository.save(this.rolePermissionsRepository.create(rp));
+            }
+        }
+        console.log('Role Permissions Matrix Synchronized.');
     }
     async seedPermissions() {
         const permissions = [
@@ -159,6 +168,8 @@ let UsersService = class UsersService {
             { code: 'hr_support.view', name: 'Voir support RH', module: 'hr_support' },
             { code: 'hr_support.manage', name: 'Gérer support RH', module: 'hr_support' },
             { code: 'search.use', name: 'Utiliser la recherche globale', module: 'search' },
+            { code: 'announcements.view', name: 'Voir les annonces', module: 'announcements' },
+            { code: 'announcements.manage', name: 'Gérer les annonces', module: 'announcements' },
         ];
         for (const p of permissions) {
             const exists = await this.permissionsRepository.findOneBy({ code: p.code });
@@ -354,6 +365,32 @@ let UsersService = class UsersService {
             }
         });
         return Array.from(permissions);
+    }
+    async update(id, updateData) {
+        await this.usersRepository.update(id, updateData);
+        const updated = await this.findOne(id);
+        await this.auditService.log({
+            action: 'update_profile',
+            entityType: 'user',
+            entityId: id,
+            entityName: updated.email,
+            newValues: updateData,
+        });
+        return updated;
+    }
+    async changePassword(userId, newPassword) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.usersRepository.update(userId, {
+            passwordHash: hashedPassword,
+            passwordStatus: user_entity_2.PasswordStatus.ACTIVE
+        });
+        await this.auditService.log({
+            action: 'change_password',
+            entityType: 'user',
+            entityId: userId,
+            entityName: 'Self-Service',
+        });
+        return { message: 'Password updated successfully' };
     }
     async updateRole(userId, roleCode) {
         const user = await this.findOne(userId);

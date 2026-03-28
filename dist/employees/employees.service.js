@@ -21,13 +21,15 @@ const career_history_entity_1 = require("./entities/career-history.entity");
 const hr_document_entity_1 = require("./entities/hr-document.entity");
 const department_entity_1 = require("../departments/entities/department.entity");
 const notifications_service_1 = require("../notifications/notifications.service");
+const employee_update_request_entity_1 = require("./entities/employee-update-request.entity");
 const audit_service_1 = require("../audit/audit.service");
 let EmployeesService = class EmployeesService {
-    constructor(employeesRepository, careerHistoryRepository, hrDocumentRepository, departmentRepository, notificationsService, auditService) {
+    constructor(employeesRepository, careerHistoryRepository, hrDocumentRepository, departmentRepository, updateRequestsRepository, notificationsService, auditService) {
         this.employeesRepository = employeesRepository;
         this.careerHistoryRepository = careerHistoryRepository;
         this.hrDocumentRepository = hrDocumentRepository;
         this.departmentRepository = departmentRepository;
+        this.updateRequestsRepository = updateRequestsRepository;
         this.notificationsService = notificationsService;
         this.auditService = auditService;
     }
@@ -149,6 +151,61 @@ let EmployeesService = class EmployeesService {
             relations: ['department'],
         });
     }
+    async createUpdateRequest(userId, data) {
+        const employee = await this.findByUserId(userId);
+        if (!employee)
+            throw new common_1.NotFoundException('Employé non trouvé');
+        const request = this.updateRequestsRepository.create({
+            ...data,
+            employee_id: employee.id,
+            status: 'pending',
+        });
+        const saved = await this.updateRequestsRepository.save(request);
+        return saved;
+    }
+    async findAllUpdateRequests() {
+        return this.updateRequestsRepository.find({ order: { created_at: 'DESC' } });
+    }
+    async findUserUpdateRequests(userId) {
+        const employee = await this.findByUserId(userId);
+        if (!employee)
+            return [];
+        return this.updateRequestsRepository.find({
+            where: { employee_id: employee.id },
+            order: { created_at: 'DESC' }
+        });
+    }
+    async approveUpdateRequest(id, admin) {
+        const request = await this.updateRequestsRepository.findOne({ where: { id } });
+        if (!request)
+            throw new common_1.NotFoundException('Demande non trouvée');
+        if (request.status !== 'pending') {
+            throw new common_1.BadRequestException('Cette demande a déjà été traitée');
+        }
+        const employee = await this.findOne(request.employee_id);
+        employee[request.field_name] = request.new_value;
+        await this.employeesRepository.save(employee);
+        request.status = 'approved';
+        request.approved_by = admin.id;
+        request.approved_at = new Date();
+        const saved = await this.updateRequestsRepository.save(request);
+        await this.auditService.log({
+            action: 'approve_update',
+            entityType: 'employee_update',
+            entityId: id,
+            entityName: `${employee.first_name} ${employee.last_name}`,
+            newValues: { [request.field_name]: request.new_value },
+        });
+        return saved;
+    }
+    async rejectUpdateRequest(id, reason) {
+        const request = await this.updateRequestsRepository.findOne({ where: { id } });
+        if (!request)
+            throw new common_1.NotFoundException('Demande non trouvée');
+        request.status = 'rejected';
+        request.rejection_reason = reason;
+        return this.updateRequestsRepository.save(request);
+    }
     cleanEmptyStrings(data) {
         const cleaned = {};
         for (const [key, value] of Object.entries(data)) {
@@ -167,7 +224,9 @@ exports.EmployeesService = EmployeesService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(career_history_entity_1.CareerHistory)),
     __param(2, (0, typeorm_1.InjectRepository)(hr_document_entity_1.HRDocument)),
     __param(3, (0, typeorm_1.InjectRepository)(department_entity_1.Department)),
+    __param(4, (0, typeorm_1.InjectRepository)(employee_update_request_entity_1.EmployeeUpdateRequest)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

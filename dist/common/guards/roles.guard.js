@@ -38,7 +38,7 @@ let RolesGuard = class RolesGuard {
         if (isAdmin)
             return true;
         const hasRole = requiredRoles ? requiredRoles.some((role) => user.roles?.some(r => r.role === role)) : false;
-        const hasPermission = requiredPermissions ? requiredPermissions.some((perm) => user.extraPermissions?.includes(perm)) : false;
+        const hasPermission = requiredPermissions ? requiredPermissions.some((perm) => user.permissions?.includes(perm)) : false;
         return hasRole || hasPermission;
     }
 };

@@ -22,6 +22,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User inactive or not found');
     }
-    return user;
+    
+    // Expand permissions to include role-based ones
+    const permissions = await this.usersService.getEffectivePermissions(user.id);
+    return { ...user, permissions };
   }
 }
