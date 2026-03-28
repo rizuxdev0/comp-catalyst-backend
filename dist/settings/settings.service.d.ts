@@ -1,0 +1,36 @@
+import { Repository } from 'typeorm';
+import { PasswordPolicy } from './entities/password-policy.entity';
+import { CompanySettings } from './entities/company-settings.entity';
+import { SmtpSettings } from './entities/smtp-settings.entity';
+import { ContractTypeSetting } from './entities/contract-type-setting.entity';
+import { CollectiveAgreement } from './entities/collective-agreement.entity';
+import { MailService } from '../mail/mail.service';
+import { AuditService } from '../audit/audit.service';
+import { User } from '../users/entities/user.entity';
+export declare class SettingsService {
+    private settingsRepository;
+    private passwordPolicyRepository;
+    private smtpRepository;
+    private contractTypeRepository;
+    private collectiveAgreementRepository;
+    private mailService;
+    private auditService;
+    constructor(settingsRepository: Repository<CompanySettings>, passwordPolicyRepository: Repository<PasswordPolicy>, smtpRepository: Repository<SmtpSettings>, contractTypeRepository: Repository<ContractTypeSetting>, collectiveAgreementRepository: Repository<CollectiveAgreement>, mailService: MailService, auditService: AuditService);
+    getSettings(): Promise<CompanySettings>;
+    updateSettings(updateData: Partial<CompanySettings>, user?: User): Promise<CompanySettings>;
+    initialize(data: any): Promise<CompanySettings>;
+    getPasswordPolicy(): Promise<PasswordPolicy>;
+    updatePasswordPolicy(id: string, data: Partial<PasswordPolicy>, user?: User): Promise<PasswordPolicy>;
+    getSmtpSettings(): Promise<SmtpSettings>;
+    updateSmtpSettings(data: Partial<SmtpSettings>, user?: User): Promise<SmtpSettings>;
+    testSmtp(data: any): Promise<any>;
+    getSmtpSettingsWithPassword(): Promise<SmtpSettings | null>;
+    listContractTypes(): Promise<ContractTypeSetting[]>;
+    createContractType(data: Partial<ContractTypeSetting>): Promise<ContractTypeSetting>;
+    updateContractType(id: string, data: Partial<ContractTypeSetting>, user?: User): Promise<ContractTypeSetting>;
+    deleteContractType(id: string): Promise<void>;
+    listCollectiveAgreements(): Promise<CollectiveAgreement[]>;
+    findCollectiveAgreement(id: string): Promise<CollectiveAgreement | null>;
+    saveCollectiveAgreement(data: Partial<CollectiveAgreement>, user?: User): Promise<CollectiveAgreement>;
+    deleteCollectiveAgreement(id: string, user?: User): Promise<void>;
+}

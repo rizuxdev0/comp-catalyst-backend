@@ -1,0 +1,43 @@
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from './users.service';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { AppRole } from './entities/user-role.entity';
+
+@ApiTags('users')
+@Controller('users')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@ApiBearerAuth()
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  @Roles(AppRole.ADMIN)
+  @ApiOperation({ summary: 'List all users (Admin only)' })
+  findAll() {
+    return this.usersService.findAll();
+  }
+
+  @Post()
+  @Roles(AppRole.ADMIN)
+  @ApiOperation({ summary: 'Create a new user manually (Admin only)' })
+  create(@Body() userData: any) {
+    return this.usersService.create(userData);
+  }
+
+  @Patch(':id/role')
+  @Roles(AppRole.ADMIN)
+  @ApiOperation({ summary: 'Update user role (Admin only)' })
+  updateRole(@Param('id') id: string, @Body('role') role: AppRole) {
+    return this.usersService.updateRole(id, role);
+  }
+
+  @Delete(':id')
+  @Roles(AppRole.ADMIN)
+  @ApiOperation({ summary: 'Delete user (Admin only)' })
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
+  }
+}

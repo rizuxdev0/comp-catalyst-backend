@@ -1,0 +1,180 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LeavesService = void 0;
+const common_1 = require("@nestjs/common");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const leave_request_entity_1 = require("./entities/leave-request.entity");
+const leave_type_entity_1 = require("./entities/leave-type.entity");
+const leave_balance_entity_1 = require("./entities/leave-balance.entity");
+const company_settings_entity_1 = require("../settings/entities/company-settings.entity");
+const approvals_service_1 = require("../approvals/approvals.service");
+const audit_service_1 = require("../audit/audit.service");
+let LeavesService = class LeavesService {
+    constructor(requestRepository, typeRepository, balanceRepository, companySettingsRepository, approvalsService, dataSource, auditService) {
+        this.requestRepository = requestRepository;
+        this.typeRepository = typeRepository;
+        this.balanceRepository = balanceRepository;
+        this.companySettingsRepository = companySettingsRepository;
+        this.approvalsService = approvalsService;
+        this.dataSource = dataSource;
+        this.auditService = auditService;
+    }
+    async findAllTypes() {
+        return this.typeRepository.find({ where: { isActive: true } });
+    }
+    async findMyRequests(employeeId) {
+        return this.requestRepository.find({
+            where: { employeeId },
+            relations: ['leaveType'],
+            order: { createdAt: 'DESC' },
+        });
+    }
+    async findAllRequests(status) {
+        const where = status ? { status } : {};
+        return this.requestRepository.find({
+            where,
+            relations: ['employee', 'leaveType'],
+            order: { createdAt: 'DESC' },
+        });
+    }
+    async getBalances(employeeId, year) {
+        return this.balanceRepository.find({
+            where: { employeeId, year },
+            relations: ['leaveType'],
+        });
+    }
+    async createRequest(employeeId, data) {
+        const { leaveTypeId, startDate, endDate, daysCount } = data;
+        const year = new Date(startDate).getFullYear();
+        const balance = await this.balanceRepository.findOne({
+            where: { employeeId, leaveTypeId, year },
+        });
+        if (!balance && data.leaveType?.isPaid) {
+            throw new common_1.BadRequestException('No leave balance found for this year');
+        }
+        if (balance && (Number(balance.entitledDays) + Number(balance.carriedOverDays) - Number(balance.takenDays) - Number(balance.pendingDays)) < daysCount) {
+            throw new common_1.BadRequestException('Insufficient leave balance');
+        }
+        return this.dataSource.transaction(async (manager) => {
+            const request = manager.create(leave_request_entity_1.LeaveRequest, {
+                ...data,
+                employeeId,
+                status: leave_request_entity_1.LeaveRequestStatus.PENDING,
+            });
+            const savedRequest = await manager.save(request);
+            if (balance) {
+                balance.pendingDays = Number(balance.pendingDays) + Number(daysCount);
+                await manager.save(balance);
+            }
+            const settings = await manager.findOne(company_settings_entity_1.CompanySettings, { where: {} });
+            if (settings?.leave_approval_mode === 'workflow') {
+                const leaveType = await manager.findOne(leave_type_entity_1.LeaveType, { where: { id: leaveTypeId } });
+                await this.approvalsService.createRequest({
+                    module: 'leaves',
+                    entityId: savedRequest.id,
+                    entityLabel: `Demande de ${leaveType?.name || 'congé'} : ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`,
+                    requesterId: employeeId,
+                });
+            }
+            await this.auditService.log({
+                action: 'create',
+                entityType: 'leave_request',
+                entityId: savedRequest.id,
+                entityName: `Demande de congé - ${employeeId}`,
+                newValues: data,
+            });
+            return savedRequest;
+        });
+    }
+    async approveRequest(id, approvedBy) {
+        const request = await this.requestRepository.findOne({
+            where: { id },
+            relations: ['leaveType'],
+        });
+        if (!request || request.status !== leave_request_entity_1.LeaveRequestStatus.PENDING) {
+            throw new common_1.BadRequestException('Invalid request or already processed');
+        }
+        return this.dataSource.transaction(async (manager) => {
+            request.status = leave_request_entity_1.LeaveRequestStatus.APPROVED;
+            request.approvedBy = approvedBy;
+            request.approvedAt = new Date();
+            const year = new Date(request.startDate).getFullYear();
+            const balance = await manager.findOne(leave_balance_entity_1.LeaveBalance, {
+                where: { employeeId: request.employeeId, leaveTypeId: request.leaveTypeId, year },
+            });
+            if (balance) {
+                balance.pendingDays = Number(balance.pendingDays) - Number(request.daysCount);
+                balance.takenDays = Number(balance.takenDays) + Number(request.daysCount);
+                await manager.save(balance);
+            }
+            const saved = await manager.save(request);
+            await this.auditService.log({
+                action: 'approve',
+                entityType: 'leave_request',
+                entityId: id,
+                entityName: `Approbation congé ${id}`,
+                oldValues: { status: 'PENDING' },
+                newValues: { status: 'APPROVED', approvedBy },
+                userId: approvedBy,
+            });
+            return saved;
+        });
+    }
+    async rejectRequest(id, reason) {
+        const request = await this.requestRepository.findOne({ where: { id } });
+        if (!request || request.status !== leave_request_entity_1.LeaveRequestStatus.PENDING) {
+            throw new common_1.BadRequestException('Invalid request or already processed');
+        }
+        return this.dataSource.transaction(async (manager) => {
+            request.status = leave_request_entity_1.LeaveRequestStatus.REJECTED;
+            request.rejectionReason = reason;
+            const year = new Date(request.startDate).getFullYear();
+            const balance = await manager.findOne(leave_balance_entity_1.LeaveBalance, {
+                where: { employeeId: request.employeeId, leaveTypeId: request.leaveTypeId, year },
+            });
+            if (balance) {
+                balance.pendingDays = Number(balance.pendingDays) - Number(request.daysCount);
+                await manager.save(balance);
+            }
+            const saved = await manager.save(request);
+            await this.auditService.log({
+                action: 'reject',
+                entityType: 'leave_request',
+                entityId: id,
+                entityName: `Rejet congé ${id}`,
+                oldValues: { status: 'PENDING' },
+                newValues: { status: 'REJECTED', rejectionReason: reason },
+            });
+            return saved;
+        });
+    }
+};
+exports.LeavesService = LeavesService;
+exports.LeavesService = LeavesService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(leave_request_entity_1.LeaveRequest)),
+    __param(1, (0, typeorm_1.InjectRepository)(leave_type_entity_1.LeaveType)),
+    __param(2, (0, typeorm_1.InjectRepository)(leave_balance_entity_1.LeaveBalance)),
+    __param(3, (0, typeorm_1.InjectRepository)(company_settings_entity_1.CompanySettings)),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        approvals_service_1.ApprovalsService,
+        typeorm_2.DataSource,
+        audit_service_1.AuditService])
+], LeavesService);
+//# sourceMappingURL=leaves.service.js.map

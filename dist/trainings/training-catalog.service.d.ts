@@ -1,0 +1,32 @@
+import { Repository } from 'typeorm';
+import { TrainingCatalogItem, Skill, Certification, EmployeeSkill, EmployeeCertification, DevelopmentPlan, TrainingEvaluation } from './entities/training-catalog.entity';
+export declare class TrainingCatalogService {
+    private catalogRepo;
+    private skillRepo;
+    private certRepo;
+    private empSkillRepo;
+    private empCertRepo;
+    private devPlanRepo;
+    private evalRepo;
+    constructor(catalogRepo: Repository<TrainingCatalogItem>, skillRepo: Repository<Skill>, certRepo: Repository<Certification>, empSkillRepo: Repository<EmployeeSkill>, empCertRepo: Repository<EmployeeCertification>, devPlanRepo: Repository<DevelopmentPlan>, evalRepo: Repository<TrainingEvaluation>);
+    findAllCatalog(): Promise<TrainingCatalogItem[]>;
+    createCatalog(data: Partial<TrainingCatalogItem>): Promise<TrainingCatalogItem>;
+    updateCatalog(id: string, data: Partial<TrainingCatalogItem>): Promise<TrainingCatalogItem>;
+    deleteCatalog(id: string): Promise<import("typeorm").DeleteResult>;
+    findAllSkills(): Promise<Skill[]>;
+    createSkill(data: Partial<Skill>): Promise<Skill>;
+    updateSkill(id: string, data: Partial<Skill>): Promise<Skill>;
+    deleteSkill(id: string): Promise<import("typeorm").DeleteResult>;
+    findAllCertifications(): Promise<Certification[]>;
+    createCertification(data: Partial<Certification>): Promise<Certification>;
+    updateCertification(id: string, data: Partial<Certification>): Promise<Certification>;
+    deleteCertification(id: string): Promise<import("typeorm").DeleteResult>;
+    findAllEmployeeSkills(): Promise<EmployeeSkill[]>;
+    createEmployeeSkill(data: Partial<EmployeeSkill>): Promise<EmployeeSkill>;
+    findAllEmployeeCertifications(): Promise<EmployeeCertification[]>;
+    createEmployeeCertification(data: Partial<EmployeeCertification>): Promise<EmployeeCertification>;
+    findAllDevelopmentPlans(): Promise<DevelopmentPlan[]>;
+    createDevelopmentPlan(data: Partial<DevelopmentPlan>): Promise<DevelopmentPlan>;
+    findAllTrainingEvaluations(): Promise<TrainingEvaluation[]>;
+    createTrainingEvaluation(data: Partial<TrainingEvaluation>): Promise<TrainingEvaluation>;
+}

@@ -1,0 +1,32 @@
+import { Repository } from 'typeorm';
+import { JobPosting } from './entities/job-posting.entity';
+import { JobApplication, ApplicationStatus } from './entities/job-application.entity';
+import { TalentPool } from './entities/talent-pool.entity';
+import { CandidateEvaluation } from './entities/candidate-evaluation.entity';
+import { EventEmitter2 } from 'eventemitter2';
+export declare class RecruitmentService {
+    private postingRepository;
+    private applicationRepository;
+    private talentPoolRepository;
+    private evaluationRepository;
+    private eventEmitter;
+    constructor(postingRepository: Repository<JobPosting>, applicationRepository: Repository<JobApplication>, talentPoolRepository: Repository<TalentPool>, evaluationRepository: Repository<CandidateEvaluation>, eventEmitter: EventEmitter2);
+    findAllPostings(): Promise<JobPosting[]>;
+    findOnePosting(id: string): Promise<JobPosting>;
+    createPosting(data: Partial<JobPosting>): Promise<JobPosting>;
+    updatePosting(id: string, updates: Partial<JobPosting>): Promise<JobPosting>;
+    removePosting(id: string): Promise<void>;
+    findAllApplications(): Promise<JobApplication[]>;
+    findApplicationsByPosting(postingId: string): Promise<JobApplication[]>;
+    findOneApplication(id: string): Promise<JobApplication>;
+    createApplication(data: Partial<JobApplication>): Promise<JobApplication>;
+    updateApplicationStatus(id: string, status: ApplicationStatus, notes?: string): Promise<JobApplication>;
+    findAllTalent(): Promise<TalentPool[]>;
+    findOneTalent(id: string): Promise<TalentPool>;
+    createTalent(data: Partial<TalentPool>): Promise<TalentPool>;
+    updateTalent(id: string, updates: Partial<TalentPool>): Promise<TalentPool>;
+    removeTalent(id: string): Promise<void>;
+    createEvaluation(data: Partial<CandidateEvaluation>): Promise<CandidateEvaluation>;
+    findAllEvaluations(): Promise<CandidateEvaluation[]>;
+    analyzeCV(text: string, title?: string): Promise<any>;
+}
