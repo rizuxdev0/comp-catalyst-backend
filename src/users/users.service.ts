@@ -98,7 +98,8 @@ export class UsersService implements OnModuleInit {
     const employeePerms = all.filter(p => 
       p.module === 'portal' || 
       p.code === 'announcements.view' ||
-      p.code === 'search.use'
+      p.code === 'search.use' ||
+      p.code === 'dashboard.view'
     ).map(p => ({ role: 'employee', permissionCode: p.code }));
 
     const allToSync = [...adminPerms, ...managerPerms, ...employeePerms];
@@ -222,6 +223,16 @@ export class UsersService implements OnModuleInit {
 
       await this.rolesRepository.save(role);
       console.log('Superadmin created: rizuxdev@gmail.com / Eric007!');
+    } else {
+      // Ensure existing admin user has the role
+      const roles = await this.rolesRepository.findBy({ userId: existing.id });
+      if (!roles.some(r => r.role === AppRole.ADMIN)) {
+        await this.rolesRepository.save(this.rolesRepository.create({
+          userId: existing.id,
+          role: AppRole.ADMIN,
+        }));
+        console.log('Granted ADMIN role to existing user: rizuxdev@gmail.com');
+      }
     }
   }
 

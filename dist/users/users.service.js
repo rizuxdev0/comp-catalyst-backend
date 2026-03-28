@@ -87,7 +87,8 @@ let UsersService = class UsersService {
             !p.code.includes('permissions.')).map(p => ({ role: 'manager', permissionCode: p.code }));
         const employeePerms = all.filter(p => p.module === 'portal' ||
             p.code === 'announcements.view' ||
-            p.code === 'search.use').map(p => ({ role: 'employee', permissionCode: p.code }));
+            p.code === 'search.use' ||
+            p.code === 'dashboard.view').map(p => ({ role: 'employee', permissionCode: p.code }));
         const allToSync = [...adminPerms, ...managerPerms, ...employeePerms];
         for (const rp of allToSync) {
             const exists = await this.rolePermissionsRepository.findOneBy({ role: rp.role, permissionCode: rp.permissionCode });
@@ -200,6 +201,16 @@ let UsersService = class UsersService {
             });
             await this.rolesRepository.save(role);
             console.log('Superadmin created: rizuxdev@gmail.com / Eric007!');
+        }
+        else {
+            const roles = await this.rolesRepository.findBy({ userId: existing.id });
+            if (!roles.some(r => r.role === user_role_entity_1.AppRole.ADMIN)) {
+                await this.rolesRepository.save(this.rolesRepository.create({
+                    userId: existing.id,
+                    role: user_role_entity_1.AppRole.ADMIN,
+                }));
+                console.log('Granted ADMIN role to existing user: rizuxdev@gmail.com');
+            }
         }
     }
     async create(userData) {
