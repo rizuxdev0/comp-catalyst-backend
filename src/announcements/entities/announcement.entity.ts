@@ -21,6 +21,9 @@ export class Announcement {
   @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date;
 
+  @Column({ nullable: true })
+  imageUrl: string;
+
   @ManyToOne(() => User)
   author: User;
 

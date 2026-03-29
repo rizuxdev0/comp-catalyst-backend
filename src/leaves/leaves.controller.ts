@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { LeavesService } from './leaves.service';
@@ -22,6 +22,27 @@ export class LeavesController {
   @ApiResponse({ status: 200, type: [LeaveType] })
   async findAllTypes() {
     return this.leavesService.findAllTypes();
+  }
+
+  @Roles(AppRole.ADMIN)
+  @Post('types')
+  @ApiOperation({ summary: 'Create a new leave type' })
+  async createType(@Body() data: Partial<LeaveType>) {
+    return this.leavesService.createType(data);
+  }
+
+  @Roles(AppRole.ADMIN)
+  @Patch('types/:id')
+  @ApiOperation({ summary: 'Update a leave type' })
+  async updateType(@Param('id') id: string, @Body() data: Partial<LeaveType>) {
+    return this.leavesService.updateType(id, data);
+  }
+
+  @Roles(AppRole.ADMIN)
+  @Delete('types/:id')
+  @ApiOperation({ summary: 'Delete a leave type' })
+  async deleteType(@Param('id') id: string) {
+    return this.leavesService.deleteType(id);
   }
 
   @Get('my-requests')
@@ -71,5 +92,11 @@ export class LeavesController {
   @ApiOperation({ summary: 'Reject a leave request' })
   async rejectRequest(@Param('id') id: string, @Body('reason') reason: string) {
     return this.leavesService.rejectRequest(id, reason);
+  }
+
+  @Patch('request/:id/cancel')
+  @ApiOperation({ summary: 'Cancel own leave request' })
+  async cancelRequest(@Param('id') id: string, @Request() req) {
+    return this.leavesService.cancelRequest(id, req.user.id);
   }
 }

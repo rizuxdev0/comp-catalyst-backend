@@ -7,6 +7,7 @@ import { LeaveBalance } from './entities/leave-balance.entity';
 import { CompanySettings } from '../settings/entities/company-settings.entity';
 import { ApprovalsService } from '../approvals/approvals.service';
 import { AuditService } from '../audit/audit.service';
+import { EmployeesService } from '../employees/employees.service';
 
 @Injectable()
 export class LeavesService {
@@ -22,15 +23,42 @@ export class LeavesService {
     private approvalsService: ApprovalsService,
     private dataSource: DataSource,
     private auditService: AuditService,
+    private employeesService: EmployeesService,
   ) {}
+
+  async onModuleInit() {
+    await this.seedTypes();
+  }
+
+  private async seedTypes() {
+    const defaultTypes = [
+      { code: 'PAID', name: 'Congés Payés', defaultDays: 25, isPaid: true, isActive: true, color: '#3B82F6' },
+      { code: 'SICK', name: 'Maladie', defaultDays: 0, isPaid: true, requiresJustification: true, isActive: true, color: '#EF4444' },
+      { code: 'MATERNITY', name: 'Maternité', defaultDays: 90, isPaid: true, requiresJustification: true, isActive: true, color: '#EC4899' },
+      { code: 'PATERNITY', name: 'Paternité', defaultDays: 10, isPaid: true, requiresJustification: true, isActive: true, color: '#8B5CF6' },
+      { code: 'UNPAID', name: 'Sans Solde', defaultDays: 0, isPaid: false, isActive: true, color: '#6B7280' },
+      { code: 'SPECIAL', name: 'Événements Spéciaux', defaultDays: 3, isPaid: true, requiresJustification: true, isActive: true, color: '#F59E0B' },
+      { code: 'PERSONAL', name: 'Raison personnelle', defaultDays: 0, isPaid: true, requiresJustification: true, isActive: true, color: '#9CA3AF' },
+    ];
+
+    for (const type of defaultTypes) {
+      const exists = await this.typeRepository.findOne({ where: { code: type.code } });
+      if (!exists) {
+        await this.typeRepository.save(this.typeRepository.create(type));
+      }
+    }
+  }
 
   async findAllTypes(): Promise<LeaveType[]> {
     return this.typeRepository.find({ where: { isActive: true } });
   }
 
-  async findMyRequests(employeeId: string): Promise<LeaveRequest[]> {
+  async findMyRequests(userId: string): Promise<LeaveRequest[]> {
+    const employee = await this.employeesService.findByUserId(userId);
+    if (!employee) return [];
+    
     return this.requestRepository.find({
-      where: { employeeId },
+      where: { employeeId: employee.id },
       relations: ['leaveType'],
       order: { createdAt: 'DESC' },
     });
@@ -52,7 +80,11 @@ export class LeavesService {
     });
   }
 
-  async createRequest(employeeId: string, data: Partial<LeaveRequest>): Promise<LeaveRequest> {
+  async createRequest(userId: string, data: Partial<LeaveRequest>): Promise<LeaveRequest> {
+    const employee = await this.employeesService.findByUserId(userId);
+    if (!employee) throw new NotFoundException('Profil employé non trouvé');
+    const employeeId = employee.id;
+
     const { leaveTypeId, startDate, endDate, daysCount } = data;
     const year = new Date(startDate).getFullYear();
 
@@ -183,6 +215,75 @@ export class LeavesService {
       });
 
       return saved;
+    });
+  }
+
+  async createType(data: Partial<LeaveType>): Promise<LeaveType> {
+    const type = this.typeRepository.create(data);
+    return this.typeRepository.save(type);
+  }
+
+  async updateType(id: string, data: Partial<LeaveType>): Promise<LeaveType> {
+    const type = await this.typeRepository.findOne({ where: { id } });
+    if (!type) throw new NotFoundException('Type de congé non trouvé');
+    
+    // Convert named fields if coming from frontend format
+    const toUpdate = {
+      ...data,
+      defaultDays: (data as any).default_days !== undefined ? (data as any).default_days : data.defaultDays,
+      isPaid: (data as any).is_paid !== undefined ? (data as any).is_paid : data.isPaid,
+      requiresJustification: (data as any).requires_justification !== undefined ? (data as any).requires_justification : data.requiresJustification,
+      isActive: (data as any).is_active !== undefined ? (data as any).is_active : data.isActive,
+    };
+
+    Object.assign(type, toUpdate);
+    return this.typeRepository.save(type);
+  }
+
+  async deleteType(id: string): Promise<void> {
+    const type = await this.typeRepository.findOne({ where: { id } });
+    if (!type) throw new NotFoundException('Type de congé non trouvé');
+    await this.typeRepository.delete(id);
+  }
+
+  async cancelRequest(id: string, userId: string): Promise<void> {
+    const employee = await this.employeesService.findByUserId(userId);
+    if (!employee) throw new NotFoundException('Employé non trouvé');
+
+    const request = await this.requestRepository.findOne({ 
+      where: { id, employeeId: employee.id } 
+    });
+
+    if (!request) throw new NotFoundException('Demande non trouvée');
+    if (request.status !== LeaveRequestStatus.PENDING) {
+      throw new BadRequestException('Seules les demandes en attente peuvent être annulées');
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      // Si la demande est annulée, on recrédite les jours en attente dans la balance
+      const year = new Date(request.startDate).getFullYear();
+      const balance = await manager.findOne(LeaveBalance, {
+        where: { employeeId: request.employeeId, leaveTypeId: request.leaveTypeId, year },
+      });
+
+      if (balance) {
+        balance.pendingDays = Math.max(0, Number(balance.pendingDays) - Number(request.daysCount));
+        await manager.save(balance);
+      }
+
+      // Au lieu de supprimer on change le statut
+      request.status = LeaveRequestStatus.CANCELLED;
+      await manager.save(request);
+
+      await this.auditService.log({
+        action: 'cancel',
+        entityType: 'leave_request',
+        entityId: id,
+        entityName: `Annulation demande congé par l'employé`,
+        oldValues: { status: LeaveRequestStatus.PENDING },
+        newValues: { status: LeaveRequestStatus.CANCELLED },
+        userId: userId,
+      });
     });
   }
 }

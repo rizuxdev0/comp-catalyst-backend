@@ -1,13 +1,10 @@
-# Base image
-FROM node:18-alpine AS builder
+# Stage 1: Build
+FROM node:20-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
 # Install dependencies
+COPY package*.json ./
 RUN npm install
 
 # Copy source code
@@ -16,18 +13,20 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# --- Production Stage ---
-FROM node:18-alpine
+# Stage 2: Runtime
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built files and dependencies from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+# Copy built files and dependencies
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package*.json ./
 
-# Expose port
+# Environment variables (can be overridden in docker-compose)
+ENV PORT=3000
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/main"]

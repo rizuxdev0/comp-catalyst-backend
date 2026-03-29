@@ -8,6 +8,7 @@ import { LeavesController } from './leaves.controller';
 import { CompanySettings } from '../settings/entities/company-settings.entity';
 import { ApprovalsModule } from '../approvals/approvals.module';
 import { AuditModule } from '../audit/audit.module';
+import { EmployeesModule } from '../employees/employees.module';
 
 import { LeavesListener } from './leaves.listener';
 
@@ -16,6 +17,7 @@ import { LeavesListener } from './leaves.listener';
     TypeOrmModule.forFeature([LeaveRequest, LeaveType, LeaveBalance, CompanySettings]),
     ApprovalsModule,
     AuditModule,
+    EmployeesModule,
   ],
   controllers: [LeavesController],
   providers: [LeavesService, LeavesListener],

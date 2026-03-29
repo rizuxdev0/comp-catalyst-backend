@@ -146,31 +146,73 @@ export class RecruitmentService {
     return this.evaluationRepository.find({ order: { evaluatedAt: 'DESC' } });
   }
 
-  // AI Analysis Mock
+  // AI Analysis Mock (Simulation of advanced AI extraction)
   async analyzeCV(text: string, title?: string): Promise<any> {
     // Artificial delay to simulate processing
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     
-    // Naive mock extraction
+    // Naive mock extraction for the demo
     const hasEmail = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
     const hasPhone = text.match(/(\+?[0-9\s.-]{8,})/gi);
+    const hasName = text.split('\n')[0].trim() || 'Candidat Extrait';
     
+    // Simulate rich AI response structure
     return {
+      success: true,
       analysis: {
-        candidate_name: 'Candidat Extrait',
-        candidate_email: hasEmail ? hasEmail[0] : 'email@exemple.com',
-        candidate_phone: hasPhone ? hasPhone[0] : '0600000000',
-        current_position: 'Développeur Fullstack',
+        candidate_name: hasName,
+        candidate_email: hasEmail ? hasEmail[0] : 'contact@candidat.fr',
+        candidate_phone: hasPhone ? hasPhone[0] : '06 00 00 00 00',
+        profile_summary: "Candidat polyvalent et motivé. Une solide base de compétences opérationnelles et une forte adaptabilité aux environnements dynamiques.",
+        current_position: "Équipier polyvalent",
         experience_years: 5,
-        skills: ['JavaScript', 'React', 'NestJS', 'TypeORM', 'PostgreSQL'],
-        compatibility_score: 85,
+        compatibility_score: 75,
         compatibility_details: {
-          strengths: ['Expérience pertinente', 'Compétences techniques alignées'],
-          gaps: ['Anglais à confirmer'],
+          strengths: [
+            "Grande polyvalence opérationnelle",
+            "Expérience client prouvée",
+            "Capacité à travailler en équipe sous pression",
+            "Autonomie et sérieux"
+          ],
+          gaps: [
+            "Certaines compétences spécifiques au poste à approfondir",
+            "Besoin d'accompagnement sur les outils internes"
+          ]
         },
-        profile_summary: 'Profil très prometteur correspondant aux critères de l\'offre.',
-        recommended_tags: ['senior', 'remote', 'valeur sûre'],
-        overall_rating: 4,
+        skills: [
+          "Gestion de la relation client",
+          "Travail d'équipe",
+          "Polyvalence opérationnelle",
+          "Respect des standards de qualité",
+          "Adaptabilité"
+        ],
+        education: [
+          {
+            degree: "Licence Marketing et Stratégie",
+            institution: "Université de Lomé",
+            year: "2025"
+          }
+        ],
+        work_experience: [
+          {
+            company: "Burger King",
+            position: "Équipier polyvalent",
+            duration: "2023 - 2025",
+            description: "Préparation, service, accueil et caisse."
+          },
+          {
+            company: "Entreprise de Service",
+            position: "Vente en boutique",
+            duration: "2021 - 2023",
+            description: "Gestion des stocks et vente directe."
+          }
+        ],
+        languages: [
+          { language: "Français", level: "C1" },
+          { language: "Anglais", level: "A1" }
+        ],
+        recommended_tags: ["Polyvalent", "Junior", "Service client", "Motivé"],
+        overall_rating: 4
       }
     };
   }

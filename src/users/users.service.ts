@@ -99,7 +99,9 @@ export class UsersService implements OnModuleInit {
       p.module === 'portal' || 
       p.code === 'announcements.view' ||
       p.code === 'search.use' ||
-      p.code === 'dashboard.view'
+      p.code === 'dashboard.view' ||
+      p.code === 'leaves.view' ||
+      p.code === 'leaves.create'
     ).map(p => ({ role: 'employee', permissionCode: p.code }));
 
     const allToSync = [...adminPerms, ...managerPerms, ...employeePerms];
