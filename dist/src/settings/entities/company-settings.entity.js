@@ -236,6 +236,21 @@ __decorate([
     __metadata("design:type", String)
 ], CompanySettings.prototype, "leave_approval_mode", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'night_on_call_rate', type: 'decimal', precision: 5, scale: 2, default: 1.5 }),
+    (0, swagger_1.ApiProperty)({ example: 1.5, description: 'Multiplier for night on-call duty' }),
+    __metadata("design:type", Number)
+], CompanySettings.prototype, "night_on_call_rate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'weekend_on_call_rate', type: 'decimal', precision: 5, scale: 2, default: 2.0 }),
+    (0, swagger_1.ApiProperty)({ example: 2.0, description: 'Multiplier for weekend on-call duty' }),
+    __metadata("design:type", Number)
+], CompanySettings.prototype, "weekend_on_call_rate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'holiday_on_call_rate', type: 'decimal', precision: 5, scale: 2, default: 2.5 }),
+    (0, swagger_1.ApiProperty)({ example: 2.5, description: 'Multiplier for holiday on-call duty' }),
+    __metadata("design:type", Number)
+], CompanySettings.prototype, "holiday_on_call_rate", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at', type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], CompanySettings.prototype, "created_at", void 0);

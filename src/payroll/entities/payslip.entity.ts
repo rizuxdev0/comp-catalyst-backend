@@ -24,6 +24,10 @@ export class PaySlip {
   @ApiProperty({ type: () => Employee })
   employee: Employee;
 
+  @Column({ name: 'establishment_id', nullable: true })
+  @ApiProperty({ example: 'uuid', required: false })
+  establishmentId: string;
+
   @Column({ name: 'period_month' })
   @ApiProperty({ example: 5 })
   periodMonth: number;

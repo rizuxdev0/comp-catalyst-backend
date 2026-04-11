@@ -69,4 +69,10 @@ export class NotificationsController {
   clearAll(@Req() req: any) {
     return this.notificationsService.clearAll(req.user.id || req.user.userId);
   }
+
+  @Post('push/subscribe')
+  @ApiOperation({ summary: 'Subscribe to web push notifications' })
+  subscribeToPush(@Body() subscription: any, @Req() req: any) {
+    return this.notificationsService.saveSubscription(req.user.id || req.user.userId, subscription);
+  }
 }

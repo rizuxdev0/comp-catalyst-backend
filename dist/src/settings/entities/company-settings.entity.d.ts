@@ -43,6 +43,9 @@ export declare class CompanySettings {
     ceo_position: string;
     ceo_signature_url: string;
     leave_approval_mode: string;
+    night_on_call_rate: number;
+    weekend_on_call_rate: number;
+    holiday_on_call_rate: number;
     created_at: Date;
     updated_at: Date;
 }

@@ -47,6 +47,7 @@ let AuthService = class AuthService {
         };
         const response = {
             access_token: this.jwtService.sign(payload),
+            refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
             user: {
                 id: user.id,
                 email: user.email,
@@ -63,6 +64,28 @@ let AuthService = class AuthService {
             entityName: user.email,
         });
         return response;
+    }
+    async refresh(token) {
+        try {
+            const payload = this.jwtService.verify(token);
+            const user = await this.usersService.findOne(payload.sub);
+            if (!user || !user.isActive)
+                throw new common_1.UnauthorizedException('User inactive or not found');
+            const permissions = await this.usersService.getEffectivePermissions(user.id);
+            const roles = user.roles?.map((r) => r.role) || [];
+            const newPayload = {
+                sub: user.id,
+                email: user.email,
+                roles: roles
+            };
+            return {
+                access_token: this.jwtService.sign(newPayload),
+                refresh_token: this.jwtService.sign(newPayload, { expiresIn: '7d' }),
+            };
+        }
+        catch (e) {
+            throw new common_1.UnauthorizedException('Invalid refresh token');
+        }
     }
     async getMe(user) {
         const permissions = await this.usersService.getEffectivePermissions(user.id);

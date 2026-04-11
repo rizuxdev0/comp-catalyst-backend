@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
+import { PushSubscription } from './entities/push-subscription.entity';
 
 @Injectable()
 export class NotificationsService {
@@ -11,6 +12,8 @@ export class NotificationsService {
     private readonly notificationsRepository: Repository<Notification>,
     @InjectRepository(NotificationPreference)
     private readonly preferencesRepository: Repository<NotificationPreference>,
+    @InjectRepository(PushSubscription)
+    private readonly pushRepository: Repository<PushSubscription>,
   ) {}
 
   // ===================== NOTIFICATIONS =====================
@@ -91,5 +94,29 @@ export class NotificationsService {
     if (!existing) throw new NotFoundException('Notification preference not found');
     Object.assign(existing, data);
     return this.preferencesRepository.save(existing);
+  }
+
+  // ===================== PUSH =====================
+
+  async saveSubscription(userId: string, subscription: any): Promise<PushSubscription> {
+    // Check if subscription already exists for this endpoint
+    const existing = await this.pushRepository.findOne({ where: { endpoint: subscription.endpoint, userId } });
+    if (existing) {
+      existing.keys = subscription.keys;
+      existing.expirationTime = subscription.expirationTime;
+      return this.pushRepository.save(existing);
+    }
+
+    const sub = this.pushRepository.create({
+      userId,
+      endpoint: subscription.endpoint,
+      expirationTime: subscription.expirationTime,
+      keys: subscription.keys,
+    });
+    return this.pushRepository.save(sub);
+  }
+
+  async findSubscriptions(userId: string): Promise<PushSubscription[]> {
+    return this.pushRepository.find({ where: { userId } });
   }
 }

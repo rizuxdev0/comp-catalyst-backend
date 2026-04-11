@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
 import { PaySlip } from './entities/payslip.entity';
 import { Employee } from '../employees/entities/employee.entity';
@@ -6,6 +7,8 @@ import { PremiumType } from './entities/premium-type.entity';
 import { EmployeePremium } from './entities/employee-premium.entity';
 import { SalaryDeduction } from './entities/salary-deduction.entity';
 import { CompanySettings } from '../settings/entities/company-settings.entity';
+import { OnCallDuty } from './entities/on-call-duty.entity';
+import { PerformanceBonus } from './entities/performance-bonus.entity';
 export declare class PayrollService {
     private payslipRepository;
     private employeeRepository;
@@ -13,12 +16,19 @@ export declare class PayrollService {
     private employeePremiumRepository;
     private deductionRepository;
     private settingsRepository;
+    private onCallDutyRepository;
+    private performanceBonusRepository;
     private auditService;
-    constructor(payslipRepository: Repository<PaySlip>, employeeRepository: Repository<Employee>, premiumTypeRepository: Repository<PremiumType>, employeePremiumRepository: Repository<EmployeePremium>, deductionRepository: Repository<SalaryDeduction>, settingsRepository: Repository<CompanySettings>, auditService: AuditService);
+    private eventEmitter;
+    constructor(payslipRepository: Repository<PaySlip>, employeeRepository: Repository<Employee>, premiumTypeRepository: Repository<PremiumType>, employeePremiumRepository: Repository<EmployeePremium>, deductionRepository: Repository<SalaryDeduction>, settingsRepository: Repository<CompanySettings>, onCallDutyRepository: Repository<OnCallDuty>, performanceBonusRepository: Repository<PerformanceBonus>, auditService: AuditService, eventEmitter: EventEmitter2);
     generateDraft(employeeId: string, month: number, year: number): Promise<PaySlip>;
     generateBulk(month: number, year: number, departmentId?: string): Promise<any>;
     findAll(filters: any): Promise<PaySlip[]>;
     findOne(id: string): Promise<PaySlip>;
     validate(id: string, userId: string): Promise<PaySlip>;
     markAsPaid(id: string): Promise<PaySlip>;
+    createOnCallDuty(data: any): Promise<OnCallDuty>;
+    createPerformanceBonus(data: any): Promise<PerformanceBonus>;
+    findOnCallDuties(employeeId?: string): Promise<OnCallDuty[]>;
+    findPerformanceBonuses(employeeId?: string): Promise<PerformanceBonus[]>;
 }

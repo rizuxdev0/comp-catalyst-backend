@@ -3,6 +3,9 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import * as cookieParser from 'cookie-parser';
+
+import { API_PREFIX } from './common/constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,7 +15,9 @@ async function bootstrap() {
   const frontendPort = 5175;
 
   // Global prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix(API_PREFIX);
+  
+  app.use(cookieParser());
 
   // Global Validation Pipe
   app.useGlobalPipes(
@@ -29,9 +34,9 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup(`${API_PREFIX}/docs`, app, document);
 
-  // Enable CORS — autorise le frontend (port 5175) et tout en dev
+  // Enable CORS
   app.enableCors({
     origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -42,12 +47,12 @@ async function bootstrap() {
 
   const backendUrl = `http://localhost:${port}`;
   const frontendUrl = `http://localhost:${frontendPort}`;
-  const swaggerUrl = `${backendUrl}/api/docs`;
+  const swaggerUrl = `${backendUrl}/api/v1/docs`;
 
   console.log('\n============================================================');
   console.log('  🚀  PayrollPro Backend démarré avec succès !');
   console.log('============================================================');
-  console.log(`  📡  Backend API   : ${backendUrl}/api`);
+  console.log(`  📡  Backend API   : ${backendUrl}/api/v1`);
   console.log(`  🌐  Frontend URL  : ${frontendUrl}`);
   console.log(`  📖  Swagger UI    : ${swaggerUrl}`);
   console.log('============================================================\n');

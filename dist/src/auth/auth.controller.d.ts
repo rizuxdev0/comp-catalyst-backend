@@ -2,8 +2,9 @@ import { AuthService } from './auth.service';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
-    login(req: any): Promise<{
+    login(req: any, res: any): Promise<{
         access_token: string;
+        refresh_token: string;
         user: {
             id: any;
             email: any;
@@ -12,6 +13,13 @@ export declare class AuthController {
             roles: any;
             permissions: string[];
         };
+    }>;
+    refresh(req: any, res: any): Promise<{
+        access_token: string;
+        refresh_token: string;
+    }>;
+    logout(res: any): Promise<{
+        success: boolean;
     }>;
     getProfile(req: any): Promise<{
         id: any;

@@ -12,4 +12,5 @@ export declare class NotificationsController {
     markAllRead(req: any): Promise<void>;
     remove(id: string, req: any): Promise<void>;
     clearAll(req: any): Promise<void>;
+    subscribeToPush(subscription: any, req: any): Promise<import("./entities/push-subscription.entity").PushSubscription>;
 }

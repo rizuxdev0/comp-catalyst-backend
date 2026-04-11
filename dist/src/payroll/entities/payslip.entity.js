@@ -40,6 +40,11 @@ __decorate([
     __metadata("design:type", employee_entity_1.Employee)
 ], PaySlip.prototype, "employee", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'establishment_id', nullable: true }),
+    (0, swagger_1.ApiProperty)({ example: 'uuid', required: false }),
+    __metadata("design:type", String)
+], PaySlip.prototype, "establishmentId", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'period_month' }),
     (0, swagger_1.ApiProperty)({ example: 5 }),
     __metadata("design:type", Number)

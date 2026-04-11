@@ -36,7 +36,12 @@ let DepartmentsService = class DepartmentsService {
         return saved;
     }
     async findAll() {
-        return this.departmentRepository.find({ relations: ['manager', 'parent'] });
+        return this.departmentRepository
+            .createQueryBuilder('department')
+            .leftJoinAndSelect('department.manager', 'manager')
+            .leftJoinAndSelect('department.parent', 'parent')
+            .loadRelationCountAndMap('department.employeeCount', 'department.employees')
+            .getMany();
     }
     async findOne(id) {
         const department = await this.departmentRepository.findOne({

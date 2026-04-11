@@ -10,10 +10,12 @@ export declare class RecruitmentController {
     createPosting(data: any): Promise<import("./entities/job-posting.entity").JobPosting>;
     updatePosting(id: string, data: any): Promise<import("./entities/job-posting.entity").JobPosting>;
     removePosting(id: string): Promise<void>;
+    publishToJobBoards(id: string, platforms: string[]): Promise<any>;
     findAllApplications(postingId?: string): Promise<JobApplication[]>;
     findOneApplication(id: string): Promise<JobApplication>;
     createApplication(data: any): Promise<JobApplication>;
     updateApplicationStatus(id: string, status: ApplicationStatus, notes?: string): Promise<JobApplication>;
+    sendApplicationEmail(id: string, subject: string, body: string): Promise<any>;
     findAllTalent(): Promise<TalentPool[]>;
     findOneTalent(id: string): Promise<TalentPool>;
     createTalent(data: any): Promise<TalentPool>;

@@ -12,9 +12,21 @@ import { AuditModule } from '../audit/audit.module';
 
 import { CompanySettings } from '../settings/entities/company-settings.entity';
 
+import { OnCallDuty } from './entities/on-call-duty.entity';
+import { PerformanceBonus } from './entities/performance-bonus.entity';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PaySlip, Employee, PremiumType, EmployeePremium, SalaryDeduction, CompanySettings]),
+    TypeOrmModule.forFeature([
+      PaySlip, 
+      Employee, 
+      PremiumType, 
+      EmployeePremium, 
+      SalaryDeduction, 
+      CompanySettings,
+      OnCallDuty,
+      PerformanceBonus
+    ]),
     forwardRef(() => EmployeesModule),
     AuditModule,
   ],

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn, RelationCount } from 'typeorm';
 import { Employee } from '../../employees/entities/employee.entity';
 
 @Entity('departments')
@@ -34,6 +34,9 @@ export class Department {
 
   @OneToMany(() => Employee, (employee) => employee.department)
   employees: Employee[];
+
+  @RelationCount((department: Department) => department.employees)
+  employeeCount: number;
 
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   budget: number;

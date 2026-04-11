@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/entities/user.entity';
 import { Department } from '../../departments/entities/department.entity';
+import { Establishment } from '../../establishments/entities/establishment.entity';
 
 export enum EmployeeStatus {
   ACTIVE = 'active',
@@ -191,6 +192,13 @@ export class Employee {
   @ManyToOne(() => Department, (dept) => dept.employees, { nullable: true })
   @JoinColumn({ name: 'department_id' })
   department: Department;
+
+  @Column({ name: 'establishment_id', nullable: true })
+  establishment_id: string;
+
+  @ManyToOne(() => Establishment, (est) => est.employees, { nullable: true })
+  @JoinColumn({ name: 'establishment_id' })
+  establishment: Establishment;
 
   @Column({
     name: 'employee_status',

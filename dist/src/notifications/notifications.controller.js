@@ -51,6 +51,9 @@ let NotificationsController = class NotificationsController {
     clearAll(req) {
         return this.notificationsService.clearAll(req.user.id || req.user.userId);
     }
+    subscribeToPush(subscription, req) {
+        return this.notificationsService.saveSubscription(req.user.id || req.user.userId, subscription);
+    }
 };
 exports.NotificationsController = NotificationsController;
 __decorate([
@@ -140,6 +143,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "clearAll", null);
+__decorate([
+    (0, common_1.Post)('push/subscribe'),
+    (0, swagger_1.ApiOperation)({ summary: 'Subscribe to web push notifications' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "subscribeToPush", null);
 exports.NotificationsController = NotificationsController = __decorate([
     (0, swagger_1.ApiTags)('notifications'),
     (0, swagger_1.ApiBearerAuth)(),

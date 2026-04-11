@@ -17,4 +17,8 @@ export declare class PayrollController {
     findAllDeductions(employeeId?: string): Promise<import("./entities/salary-deduction.entity").SalaryDeduction[]>;
     createDeduction(data: any): Promise<import("./entities/salary-deduction.entity").SalaryDeduction[]>;
     approveDeduction(id: string, req: any): Promise<import("./entities/salary-deduction.entity").SalaryDeduction>;
+    createOnCall(data: any): Promise<import("./entities/on-call-duty.entity").OnCallDuty>;
+    findOnCall(employeeId?: string): Promise<import("./entities/on-call-duty.entity").OnCallDuty[]>;
+    createBonus(data: any): Promise<import("./entities/performance-bonus.entity").PerformanceBonus>;
+    findBonuses(employeeId?: string): Promise<import("./entities/performance-bonus.entity").PerformanceBonus[]>;
 }

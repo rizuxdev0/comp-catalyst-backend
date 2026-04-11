@@ -9,6 +9,7 @@ export declare class PaySlip {
     id: string;
     employeeId: string;
     employee: Employee;
+    establishmentId: string;
     periodMonth: number;
     periodYear: number;
     baseSalary: number;

@@ -179,6 +179,19 @@ export class CompanySettings {
   @ApiProperty({ example: 'simple', description: 'Mode d\'approbation des congés: simple (admin direct) ou workflow (étapes multiples)' })
   leave_approval_mode: string;
 
+  // Standby / On-call rates (multipliers of hourly rate or fixed amounts)
+  @Column({ name: 'night_on_call_rate', type: 'decimal', precision: 5, scale: 2, default: 1.5 })
+  @ApiProperty({ example: 1.5, description: 'Multiplier for night on-call duty' })
+  night_on_call_rate: number;
+
+  @Column({ name: 'weekend_on_call_rate', type: 'decimal', precision: 5, scale: 2, default: 2.0 })
+  @ApiProperty({ example: 2.0, description: 'Multiplier for weekend on-call duty' })
+  weekend_on_call_rate: number;
+
+  @Column({ name: 'holiday_on_call_rate', type: 'decimal', precision: 5, scale: 2, default: 2.5 })
+  @ApiProperty({ example: 2.5, description: 'Multiplier for holiday on-call duty' })
+  holiday_on_call_rate: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   created_at: Date;
 

@@ -11,6 +11,7 @@ export declare class AuthService {
     validateUser(email: string, pass: string): Promise<any>;
     login(user: any): Promise<{
         access_token: string;
+        refresh_token: string;
         user: {
             id: any;
             email: any;
@@ -19,6 +20,10 @@ export declare class AuthService {
             roles: any;
             permissions: string[];
         };
+    }>;
+    refresh(token: string): Promise<{
+        access_token: string;
+        refresh_token: string;
     }>;
     getMe(user: any): Promise<{
         id: any;

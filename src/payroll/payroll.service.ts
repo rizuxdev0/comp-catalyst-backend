@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { PaySlip, PaySlipStatus } from './entities/payslip.entity';
 import { Employee } from '../employees/entities/employee.entity';
 import { AuditService } from '../audit/audit.service';
@@ -8,6 +9,8 @@ import { PremiumType } from './entities/premium-type.entity';
 import { EmployeePremium } from './entities/employee-premium.entity';
 import { SalaryDeduction, DeductionStatus, ApprovalStatus } from './entities/salary-deduction.entity';
 import { CompanySettings } from '../settings/entities/company-settings.entity';
+import { OnCallDuty } from './entities/on-call-duty.entity';
+import { PerformanceBonus } from './entities/performance-bonus.entity';
 
 @Injectable()
 export class PayrollService {
@@ -24,7 +27,12 @@ export class PayrollService {
     private deductionRepository: Repository<SalaryDeduction>,
     @InjectRepository(CompanySettings)
     private settingsRepository: Repository<CompanySettings>,
+    @InjectRepository(OnCallDuty)
+    private onCallDutyRepository: Repository<OnCallDuty>,
+    @InjectRepository(PerformanceBonus)
+    private performanceBonusRepository: Repository<PerformanceBonus>,
     private auditService: AuditService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async generateDraft(employeeId: string, month: number, year: number): Promise<PaySlip> {
@@ -61,6 +69,41 @@ export class PayrollService {
     }));
 
     const totalPremiums = premiumsDetail.reduce((sum, p) => sum + p.amount, 0);
+
+    // 3a. Get On-call duties for this period
+    const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+    const onCallDuties = await this.onCallDutyRepository.find({
+      where: { 
+        employeeId, 
+        isPaid: false,
+        date: Between(startDate, endDate) as any
+      }
+    });
+
+    for (const oc of onCallDuties) {
+      premiumsDetail.push({
+        label: `Astreinte (${oc.type}) - ${oc.date}`,
+        amount: Number(oc.amount),
+        isTaxable: true,
+      });
+    }
+
+    // 3b. Get Performance Bonuses for this period
+    const bonuses = await this.performanceBonusRepository.find({
+      where: { employeeId, isPaid: false, period: `${year}-${month}` } // Simplified period check
+    });
+
+    for (const b of bonuses) {
+      premiumsDetail.push({
+        label: `Prime: ${b.title}`,
+        amount: Number(b.finalAmount),
+        isTaxable: true,
+      });
+    }
+
+    const updatedTotalPremiums = premiumsDetail.reduce((sum, p) => sum + p.amount, 0);
 
     // 4. Get Active Deductions for this period
     const activeDeductions = await this.deductionRepository.find({
@@ -112,7 +155,7 @@ export class PayrollService {
     }
 
     // 5. Calculate Final
-    const grossSalary = baseSalary + totalPremiums;
+    const grossSalary = baseSalary + updatedTotalPremiums;
     const netSalary = grossSalary - totalDeductions;
 
     const payslip = this.payslipRepository.create({
@@ -122,11 +165,12 @@ export class PayrollService {
       baseSalary,
       grossSalary,
       netSalary,
-      totalPremiums,
+      totalPremiums: updatedTotalPremiums,
       totalDeductions,
       premiumsDetail,
       deductionsDetail,
       employerDetail, // New field
+      establishmentId: (employee as any).establishment_id,
       status: PaySlipStatus.DRAFT,
     });
 
@@ -204,6 +248,45 @@ export class PayrollService {
     payslip.validatedAt = new Date();
     const saved = await this.payslipRepository.save(payslip);
 
+    // Mark on-call and bonuses as paid
+    const startDate = new Date(payslip.periodYear, payslip.periodMonth - 1, 1).toISOString().split('T')[0];
+    const endDate = new Date(payslip.periodYear, payslip.periodMonth, 0).toISOString().split('T')[0];
+    
+    await this.onCallDutyRepository.update(
+      { employeeId: payslip.employeeId, isPaid: false, date: Between(startDate, endDate) as any },
+      { isPaid: true, payslipId: saved.id }
+    );
+
+    await this.performanceBonusRepository.update(
+      { employeeId: payslip.employeeId, isPaid: false, period: `${payslip.periodYear}-${payslip.periodMonth}` },
+      { isPaid: true }
+    );
+
+    // Update Salary Deductions progress
+    const activeDeductions = await this.deductionRepository.find({
+      where: { employeeId: payslip.employeeId, status: DeductionStatus.ACTIVE, approvalStatus: ApprovalStatus.APPROVED },
+    });
+
+    for (const d of activeDeductions) {
+      const amountPaid = Number(d.amountPerMonth);
+      d.remainingAmount = Math.max(0, Number(d.remainingAmount) - amountPaid);
+      d.installmentsPaid += 1;
+      
+      if (d.remainingAmount <= 0 || d.installmentsPaid >= d.installmentsCount) {
+        d.status = DeductionStatus.COMPLETED;
+      }
+      await this.deductionRepository.save(d);
+    }
+
+    // Notify employee
+    if (payslip.employee?.userId) {
+      this.eventEmitter.emit('payroll.finalized', {
+        userId: payslip.employee.userId,
+        month: payslip.periodMonth.toString(),
+        year: payslip.periodYear,
+      });
+    }
+
     // AUDIT LOG
     await this.auditService.log({
       userId,
@@ -224,5 +307,64 @@ export class PayrollService {
     payslip.status = PaySlipStatus.PAID;
     payslip.paidAt = new Date();
     return this.payslipRepository.save(payslip);
+  }
+
+  // ===================== ON-CALL (ASTREINTES) =====================
+
+  async createOnCallDuty(data: any): Promise<OnCallDuty> {
+    const { employeeId, type, hours } = data;
+    
+    // 1. Get Employee and Settings
+    const employee = await this.employeeRepository.findOne({ where: { id: employeeId } });
+    const settings = await this.settingsRepository.findOne({ where: {} });
+    
+    if (!employee || !settings) throw new BadRequestException('Employee or Settings not found');
+
+    // 2. Calculate Hourly Rate
+    const weeklyContract = Number(employee.working_hours_per_week || 40);
+    const weeklyToMonthlyRatio = 4.33;
+    const hourlyRate = Number(employee.base_salary) / (weeklyContract * weeklyToMonthlyRatio);
+
+    // 3. Get Multiplier
+    let multiplier = 1.0;
+    if (type === 'night') multiplier = Number(settings.night_on_call_rate);
+    else if (type === 'weekend') multiplier = Number(settings.weekend_on_call_rate);
+    else if (type === 'holiday') multiplier = Number(settings.holiday_on_call_rate);
+    else multiplier = 1.0; // General
+
+    const amount = hours * hourlyRate * (multiplier - 1); // Compensation corresponds to the extra pay or a fraction
+
+    const oc = this.onCallDutyRepository.create(data as Partial<OnCallDuty>);
+    oc.amount = Math.round(amount);
+
+    return this.onCallDutyRepository.save(oc);
+  }
+
+  async createPerformanceBonus(data: any): Promise<PerformanceBonus> {
+    const { baseAmount, achievementPercentage } = data;
+    const finalAmount = (Number(baseAmount) * Number(achievementPercentage)) / 100;
+    
+    const bonus = this.performanceBonusRepository.create(data as Partial<PerformanceBonus>);
+    bonus.finalAmount = Math.round(finalAmount);
+
+    return this.performanceBonusRepository.save(bonus);
+  }
+
+  async findOnCallDuties(employeeId?: string) {
+    const where = employeeId ? { employeeId } : {};
+    return this.onCallDutyRepository.find({
+      where,
+      relations: ['employee'],
+      order: { date: 'DESC' },
+    });
+  }
+
+  async findPerformanceBonuses(employeeId?: string) {
+    const where = employeeId ? { employeeId } : {};
+    return this.performanceBonusRepository.find({
+      where,
+      relations: ['employee'],
+      order: { period: 'DESC' },
+    });
   }
 }

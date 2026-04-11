@@ -18,10 +18,12 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const notification_entity_1 = require("./entities/notification.entity");
 const notification_preference_entity_1 = require("./entities/notification-preference.entity");
+const push_subscription_entity_1 = require("./entities/push-subscription.entity");
 let NotificationsService = class NotificationsService {
-    constructor(notificationsRepository, preferencesRepository) {
+    constructor(notificationsRepository, preferencesRepository, pushRepository) {
         this.notificationsRepository = notificationsRepository;
         this.preferencesRepository = preferencesRepository;
+        this.pushRepository = pushRepository;
     }
     async findAllByUser(userId) {
         return this.notificationsRepository.find({
@@ -87,13 +89,33 @@ let NotificationsService = class NotificationsService {
         Object.assign(existing, data);
         return this.preferencesRepository.save(existing);
     }
+    async saveSubscription(userId, subscription) {
+        const existing = await this.pushRepository.findOne({ where: { endpoint: subscription.endpoint, userId } });
+        if (existing) {
+            existing.keys = subscription.keys;
+            existing.expirationTime = subscription.expirationTime;
+            return this.pushRepository.save(existing);
+        }
+        const sub = this.pushRepository.create({
+            userId,
+            endpoint: subscription.endpoint,
+            expirationTime: subscription.expirationTime,
+            keys: subscription.keys,
+        });
+        return this.pushRepository.save(sub);
+    }
+    async findSubscriptions(userId) {
+        return this.pushRepository.find({ where: { userId } });
+    }
 };
 exports.NotificationsService = NotificationsService;
 exports.NotificationsService = NotificationsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(notification_entity_1.Notification)),
     __param(1, (0, typeorm_1.InjectRepository)(notification_preference_entity_1.NotificationPreference)),
+    __param(2, (0, typeorm_1.InjectRepository)(push_subscription_entity_1.PushSubscription)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], NotificationsService);
 //# sourceMappingURL=notifications.service.js.map

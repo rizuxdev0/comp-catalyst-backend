@@ -40,6 +40,9 @@ let RecruitmentController = class RecruitmentController {
     async removePosting(id) {
         return this.recruitmentService.removePosting(id);
     }
+    async publishToJobBoards(id, platforms) {
+        return this.recruitmentService.publishToJobBoards(id, platforms || ['LinkedIn', 'Indeed']);
+    }
     async findAllApplications(postingId) {
         if (postingId)
             return this.recruitmentService.findApplicationsByPosting(postingId);
@@ -53,6 +56,9 @@ let RecruitmentController = class RecruitmentController {
     }
     async updateApplicationStatus(id, status, notes) {
         return this.recruitmentService.updateApplicationStatus(id, status, notes);
+    }
+    async sendApplicationEmail(id, subject, body) {
+        return this.recruitmentService.sendApplicationEmail(id, subject, body);
     }
     async findAllTalent() {
         return this.recruitmentService.findAllTalent();
@@ -124,6 +130,16 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "removePosting", null);
 __decorate([
+    (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN, user_role_entity_1.AppRole.MANAGER),
+    (0, common_1.Post)('postings/:id/publish'),
+    (0, swagger_1.ApiOperation)({ summary: 'Publish job posting to job boards' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('platforms')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Array]),
+    __metadata("design:returntype", Promise)
+], RecruitmentController.prototype, "publishToJobBoards", null);
+__decorate([
     (0, common_1.Get)('applications'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all job applications' }),
     __param(0, (0, common_1.Query)('postingId')),
@@ -158,6 +174,17 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "updateApplicationStatus", null);
+__decorate([
+    (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN, user_role_entity_1.AppRole.MANAGER),
+    (0, common_1.Post)('applications/:id/send-email'),
+    (0, swagger_1.ApiOperation)({ summary: 'Send automated email to candidate' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('subject')),
+    __param(2, (0, common_1.Body)('body')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], RecruitmentController.prototype, "sendApplicationEmail", null);
 __decorate([
     (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN, user_role_entity_1.AppRole.MANAGER),
     (0, common_1.Get)('talent-pool'),

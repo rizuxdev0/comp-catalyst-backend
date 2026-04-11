@@ -26,7 +26,7 @@ let StorageController = class StorageController {
         if (!file)
             throw new common_1.NotFoundException('Aucun fichier reçu');
         return {
-            url: `/api/storage/${file.filename}`,
+            url: `/api/v1/storage/${file.filename}`,
             originalName: file.originalname,
             filename: file.filename,
             size: file.size,

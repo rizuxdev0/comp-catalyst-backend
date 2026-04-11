@@ -10,6 +10,7 @@ export declare class Department {
     parent: Department;
     children: Department[];
     employees: Employee[];
+    employeeCount: number;
     budget: number;
     isActive: boolean;
     createdAt: Date;

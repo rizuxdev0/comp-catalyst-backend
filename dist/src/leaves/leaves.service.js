@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeavesService = void 0;
 const common_1 = require("@nestjs/common");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const leave_request_entity_1 = require("./entities/leave-request.entity");
@@ -23,8 +24,9 @@ const company_settings_entity_1 = require("../settings/entities/company-settings
 const approvals_service_1 = require("../approvals/approvals.service");
 const audit_service_1 = require("../audit/audit.service");
 const employees_service_1 = require("../employees/employees.service");
+const employee_entity_1 = require("../employees/entities/employee.entity");
 let LeavesService = class LeavesService {
-    constructor(requestRepository, typeRepository, balanceRepository, companySettingsRepository, approvalsService, dataSource, auditService, employeesService) {
+    constructor(requestRepository, typeRepository, balanceRepository, companySettingsRepository, approvalsService, dataSource, auditService, employeesService, eventEmitter) {
         this.requestRepository = requestRepository;
         this.typeRepository = typeRepository;
         this.balanceRepository = balanceRepository;
@@ -33,6 +35,7 @@ let LeavesService = class LeavesService {
         this.dataSource = dataSource;
         this.auditService = auditService;
         this.employeesService = employeesService;
+        this.eventEmitter = eventEmitter;
     }
     async onModuleInit() {
         await this.seedTypes();
@@ -150,6 +153,15 @@ let LeavesService = class LeavesService {
                 await manager.save(balance);
             }
             const saved = await manager.save(request);
+            const employee = await manager.findOne(employee_entity_1.Employee, { where: { id: saved.employeeId } });
+            if (employee?.userId) {
+                this.eventEmitter.emit('leave.updated', {
+                    userId: employee.userId,
+                    status: 'approved',
+                    leaveType: request.leaveType?.name || 'Congé',
+                    startDate: request.startDate,
+                });
+            }
             await this.auditService.log({
                 action: 'approve',
                 entityType: 'leave_request',
@@ -179,6 +191,15 @@ let LeavesService = class LeavesService {
                 await manager.save(balance);
             }
             const saved = await manager.save(request);
+            const employee = await manager.findOne(employee_entity_1.Employee, { where: { id: saved.employeeId } });
+            if (employee?.userId) {
+                this.eventEmitter.emit('leave.updated', {
+                    userId: employee.userId,
+                    status: 'rejected',
+                    leaveType: 'Congé',
+                    startDate: request.startDate,
+                });
+            }
             await this.auditService.log({
                 action: 'reject',
                 entityType: 'leave_request',
@@ -263,6 +284,7 @@ exports.LeavesService = LeavesService = __decorate([
         approvals_service_1.ApprovalsService,
         typeorm_2.DataSource,
         audit_service_1.AuditService,
-        employees_service_1.EmployeesService])
+        employees_service_1.EmployeesService,
+        event_emitter_1.EventEmitter2])
 ], LeavesService);
 //# sourceMappingURL=leaves.service.js.map

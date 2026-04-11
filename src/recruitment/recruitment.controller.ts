@@ -51,6 +51,13 @@ export class RecruitmentController {
     return this.recruitmentService.removePosting(id);
   }
 
+  @Roles(AppRole.ADMIN, AppRole.MANAGER)
+  @Post('postings/:id/publish')
+  @ApiOperation({ summary: 'Publish job posting to job boards' })
+  async publishToJobBoards(@Param('id') id: string, @Body('platforms') platforms: string[]) {
+    return this.recruitmentService.publishToJobBoards(id, platforms || ['LinkedIn', 'Indeed']);
+  }
+
   // Applications
   @Get('applications')
   @ApiOperation({ summary: 'Get all job applications' })
@@ -80,6 +87,17 @@ export class RecruitmentController {
     @Body('notes') notes?: string,
   ) {
     return this.recruitmentService.updateApplicationStatus(id, status, notes);
+  }
+
+  @Roles(AppRole.ADMIN, AppRole.MANAGER)
+  @Post('applications/:id/send-email')
+  @ApiOperation({ summary: 'Send automated email to candidate' })
+  async sendApplicationEmail(
+    @Param('id') id: string,
+    @Body('subject') subject: string,
+    @Body('body') body: string,
+  ) {
+    return this.recruitmentService.sendApplicationEmail(id, subject, body);
   }
 
   // Talent Pool

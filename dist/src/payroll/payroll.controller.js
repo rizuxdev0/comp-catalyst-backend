@@ -99,6 +99,18 @@ let PayrollController = class PayrollController {
         });
         return this.payrollService['deductionRepository'].findOne({ where: { id } });
     }
+    async createOnCall(data) {
+        return this.payrollService.createOnCallDuty(data);
+    }
+    async findOnCall(employeeId) {
+        return this.payrollService.findOnCallDuties(employeeId);
+    }
+    async createBonus(data) {
+        return this.payrollService.createPerformanceBonus(data);
+    }
+    async findBonuses(employeeId) {
+        return this.payrollService.findPerformanceBonuses(employeeId);
+    }
 };
 exports.PayrollController = PayrollController;
 __decorate([
@@ -245,6 +257,38 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], PayrollController.prototype, "approveDeduction", null);
+__decorate([
+    (0, common_1.Post)('on-call'),
+    (0, swagger_1.ApiOperation)({ summary: 'Log on-call duty hours' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PayrollController.prototype, "createOnCall", null);
+__decorate([
+    (0, common_1.Get)('on-call'),
+    (0, swagger_1.ApiOperation)({ summary: 'List on-call duties' }),
+    __param(0, (0, common_1.Query)('employeeId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PayrollController.prototype, "findOnCall", null);
+__decorate([
+    (0, common_1.Post)('bonus'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a performance bonus' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PayrollController.prototype, "createBonus", null);
+__decorate([
+    (0, common_1.Get)('performance-bonuses'),
+    (0, swagger_1.ApiOperation)({ summary: 'List performance bonuses' }),
+    __param(0, (0, common_1.Query)('employeeId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PayrollController.prototype, "findBonuses", null);
 exports.PayrollController = PayrollController = __decorate([
     (0, swagger_1.ApiTags)('payroll'),
     (0, swagger_1.ApiBearerAuth)(),

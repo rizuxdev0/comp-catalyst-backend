@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const swagger_1 = require("@nestjs/swagger");
 const user_entity_1 = require("../../users/entities/user.entity");
 const department_entity_1 = require("../../departments/entities/department.entity");
+const establishment_entity_1 = require("../../establishments/entities/establishment.entity");
 var EmployeeStatus;
 (function (EmployeeStatus) {
     EmployeeStatus["ACTIVE"] = "active";
@@ -242,6 +243,15 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'department_id' }),
     __metadata("design:type", department_entity_1.Department)
 ], Employee.prototype, "department", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'establishment_id', nullable: true }),
+    __metadata("design:type", String)
+], Employee.prototype, "establishment_id", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => establishment_entity_1.Establishment, (est) => est.employees, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'establishment_id' }),
+    __metadata("design:type", establishment_entity_1.Establishment)
+], Employee.prototype, "establishment", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         name: 'employee_status',

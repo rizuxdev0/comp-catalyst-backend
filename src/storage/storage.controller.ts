@@ -39,7 +39,7 @@ export class StorageController {
   upload(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new NotFoundException('Aucun fichier reçu');
     return {
-      url: `/api/storage/${file.filename}`,
+      url: `/api/v1/storage/${file.filename}`,
       originalName: file.originalname,
       filename: file.filename,
       size: file.size,

@@ -58,6 +58,10 @@ __decorate([
     __metadata("design:type", Array)
 ], Department.prototype, "employees", void 0);
 __decorate([
+    (0, typeorm_1.RelationCount)((department) => department.employees),
+    __metadata("design:type", Number)
+], Department.prototype, "employeeCount", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 15, scale: 2, nullable: true }),
     __metadata("design:type", Number)
 ], Department.prototype, "budget", void 0);

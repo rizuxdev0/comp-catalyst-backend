@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PayrollService = void 0;
 const common_1 = require("@nestjs/common");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const payslip_entity_1 = require("./entities/payslip.entity");
@@ -23,15 +24,20 @@ const premium_type_entity_1 = require("./entities/premium-type.entity");
 const employee_premium_entity_1 = require("./entities/employee-premium.entity");
 const salary_deduction_entity_1 = require("./entities/salary-deduction.entity");
 const company_settings_entity_1 = require("../settings/entities/company-settings.entity");
+const on_call_duty_entity_1 = require("./entities/on-call-duty.entity");
+const performance_bonus_entity_1 = require("./entities/performance-bonus.entity");
 let PayrollService = class PayrollService {
-    constructor(payslipRepository, employeeRepository, premiumTypeRepository, employeePremiumRepository, deductionRepository, settingsRepository, auditService) {
+    constructor(payslipRepository, employeeRepository, premiumTypeRepository, employeePremiumRepository, deductionRepository, settingsRepository, onCallDutyRepository, performanceBonusRepository, auditService, eventEmitter) {
         this.payslipRepository = payslipRepository;
         this.employeeRepository = employeeRepository;
         this.premiumTypeRepository = premiumTypeRepository;
         this.employeePremiumRepository = employeePremiumRepository;
         this.deductionRepository = deductionRepository;
         this.settingsRepository = settingsRepository;
+        this.onCallDutyRepository = onCallDutyRepository;
+        this.performanceBonusRepository = performanceBonusRepository;
         this.auditService = auditService;
+        this.eventEmitter = eventEmitter;
     }
     async generateDraft(employeeId, month, year) {
         const settings = await this.settingsRepository.findOne({ where: {} }) || {
@@ -59,6 +65,33 @@ let PayrollService = class PayrollService {
             isTaxable: p.premiumType.isTaxable,
         }));
         const totalPremiums = premiumsDetail.reduce((sum, p) => sum + p.amount, 0);
+        const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+        const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+        const onCallDuties = await this.onCallDutyRepository.find({
+            where: {
+                employeeId,
+                isPaid: false,
+                date: (0, typeorm_2.Between)(startDate, endDate)
+            }
+        });
+        for (const oc of onCallDuties) {
+            premiumsDetail.push({
+                label: `Astreinte (${oc.type}) - ${oc.date}`,
+                amount: Number(oc.amount),
+                isTaxable: true,
+            });
+        }
+        const bonuses = await this.performanceBonusRepository.find({
+            where: { employeeId, isPaid: false, period: `${year}-${month}` }
+        });
+        for (const b of bonuses) {
+            premiumsDetail.push({
+                label: `Prime: ${b.title}`,
+                amount: Number(b.finalAmount),
+                isTaxable: true,
+            });
+        }
+        const updatedTotalPremiums = premiumsDetail.reduce((sum, p) => sum + p.amount, 0);
         const activeDeductions = await this.deductionRepository.find({
             where: { employeeId, status: salary_deduction_entity_1.DeductionStatus.ACTIVE, approvalStatus: salary_deduction_entity_1.ApprovalStatus.APPROVED },
         });
@@ -95,7 +128,7 @@ let PayrollService = class PayrollService {
                 amount: baseSalary * empSocRate,
             });
         }
-        const grossSalary = baseSalary + totalPremiums;
+        const grossSalary = baseSalary + updatedTotalPremiums;
         const netSalary = grossSalary - totalDeductions;
         const payslip = this.payslipRepository.create({
             employeeId,
@@ -104,11 +137,12 @@ let PayrollService = class PayrollService {
             baseSalary,
             grossSalary,
             netSalary,
-            totalPremiums,
+            totalPremiums: updatedTotalPremiums,
             totalDeductions,
             premiumsDetail,
             deductionsDetail,
             employerDetail,
+            establishmentId: employee.establishment_id,
             status: payslip_entity_1.PaySlipStatus.DRAFT,
         });
         const saved = await this.payslipRepository.save(payslip);
@@ -176,6 +210,29 @@ let PayrollService = class PayrollService {
         payslip.validatedBy = userId;
         payslip.validatedAt = new Date();
         const saved = await this.payslipRepository.save(payslip);
+        const startDate = new Date(payslip.periodYear, payslip.periodMonth - 1, 1).toISOString().split('T')[0];
+        const endDate = new Date(payslip.periodYear, payslip.periodMonth, 0).toISOString().split('T')[0];
+        await this.onCallDutyRepository.update({ employeeId: payslip.employeeId, isPaid: false, date: (0, typeorm_2.Between)(startDate, endDate) }, { isPaid: true, payslipId: saved.id });
+        await this.performanceBonusRepository.update({ employeeId: payslip.employeeId, isPaid: false, period: `${payslip.periodYear}-${payslip.periodMonth}` }, { isPaid: true });
+        const activeDeductions = await this.deductionRepository.find({
+            where: { employeeId: payslip.employeeId, status: salary_deduction_entity_1.DeductionStatus.ACTIVE, approvalStatus: salary_deduction_entity_1.ApprovalStatus.APPROVED },
+        });
+        for (const d of activeDeductions) {
+            const amountPaid = Number(d.amountPerMonth);
+            d.remainingAmount = Math.max(0, Number(d.remainingAmount) - amountPaid);
+            d.installmentsPaid += 1;
+            if (d.remainingAmount <= 0 || d.installmentsPaid >= d.installmentsCount) {
+                d.status = salary_deduction_entity_1.DeductionStatus.COMPLETED;
+            }
+            await this.deductionRepository.save(d);
+        }
+        if (payslip.employee?.userId) {
+            this.eventEmitter.emit('payroll.finalized', {
+                userId: payslip.employee.userId,
+                month: payslip.periodMonth.toString(),
+                year: payslip.periodYear,
+            });
+        }
         await this.auditService.log({
             userId,
             action: 'approve',
@@ -194,6 +251,52 @@ let PayrollService = class PayrollService {
         payslip.paidAt = new Date();
         return this.payslipRepository.save(payslip);
     }
+    async createOnCallDuty(data) {
+        const { employeeId, type, hours } = data;
+        const employee = await this.employeeRepository.findOne({ where: { id: employeeId } });
+        const settings = await this.settingsRepository.findOne({ where: {} });
+        if (!employee || !settings)
+            throw new common_1.BadRequestException('Employee or Settings not found');
+        const weeklyContract = Number(employee.working_hours_per_week || 40);
+        const weeklyToMonthlyRatio = 4.33;
+        const hourlyRate = Number(employee.base_salary) / (weeklyContract * weeklyToMonthlyRatio);
+        let multiplier = 1.0;
+        if (type === 'night')
+            multiplier = Number(settings.night_on_call_rate);
+        else if (type === 'weekend')
+            multiplier = Number(settings.weekend_on_call_rate);
+        else if (type === 'holiday')
+            multiplier = Number(settings.holiday_on_call_rate);
+        else
+            multiplier = 1.0;
+        const amount = hours * hourlyRate * (multiplier - 1);
+        const oc = this.onCallDutyRepository.create(data);
+        oc.amount = Math.round(amount);
+        return this.onCallDutyRepository.save(oc);
+    }
+    async createPerformanceBonus(data) {
+        const { baseAmount, achievementPercentage } = data;
+        const finalAmount = (Number(baseAmount) * Number(achievementPercentage)) / 100;
+        const bonus = this.performanceBonusRepository.create(data);
+        bonus.finalAmount = Math.round(finalAmount);
+        return this.performanceBonusRepository.save(bonus);
+    }
+    async findOnCallDuties(employeeId) {
+        const where = employeeId ? { employeeId } : {};
+        return this.onCallDutyRepository.find({
+            where,
+            relations: ['employee'],
+            order: { date: 'DESC' },
+        });
+    }
+    async findPerformanceBonuses(employeeId) {
+        const where = employeeId ? { employeeId } : {};
+        return this.performanceBonusRepository.find({
+            where,
+            relations: ['employee'],
+            order: { period: 'DESC' },
+        });
+    }
 };
 exports.PayrollService = PayrollService;
 exports.PayrollService = PayrollService = __decorate([
@@ -204,12 +307,17 @@ exports.PayrollService = PayrollService = __decorate([
     __param(3, (0, typeorm_1.InjectRepository)(employee_premium_entity_1.EmployeePremium)),
     __param(4, (0, typeorm_1.InjectRepository)(salary_deduction_entity_1.SalaryDeduction)),
     __param(5, (0, typeorm_1.InjectRepository)(company_settings_entity_1.CompanySettings)),
+    __param(6, (0, typeorm_1.InjectRepository)(on_call_duty_entity_1.OnCallDuty)),
+    __param(7, (0, typeorm_1.InjectRepository)(performance_bonus_entity_1.PerformanceBonus)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
-        audit_service_1.AuditService])
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        audit_service_1.AuditService,
+        event_emitter_1.EventEmitter2])
 ], PayrollService);
 //# sourceMappingURL=payroll.service.js.map

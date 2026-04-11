@@ -49,6 +49,9 @@ const holiday_plan_module_1 = require("./holiday-plan/holiday-plan.module");
 const hr_documents_module_1 = require("./hr-documents/hr-documents.module");
 const search_module_1 = require("./search/search.module");
 const announcements_module_1 = require("./announcements/announcements.module");
+const attendance_module_1 = require("./attendance/attendance.module");
+const accounting_module_1 = require("./accounting/accounting.module");
+const establishments_module_1 = require("./establishments/establishments.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -110,7 +113,10 @@ exports.AppModule = AppModule = __decorate([
             holiday_plan_module_1.HolidayPlanModule,
             hr_documents_module_1.HrDocumentsModule,
             search_module_1.SearchModule,
-            announcements_module_1.AnnouncementsModule
+            announcements_module_1.AnnouncementsModule,
+            attendance_module_1.AttendanceModule,
+            accounting_module_1.AccountingModule,
+            establishments_module_1.EstablishmentModule
         ],
         controllers: [],
         providers: [],

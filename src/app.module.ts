@@ -42,6 +42,9 @@ import { HolidayPlan } from './holiday-plan/entities/holiday-plan.entity';
 import { HrDocumentsModule } from './hr-documents/hr-documents.module';
 import { SearchModule } from './search/search.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { AccountingModule } from './accounting/accounting.module';
+import { EstablishmentModule } from './establishments/establishments.module';
 
 @Module({
   imports: [
@@ -102,7 +105,10 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     HolidayPlanModule,
     HrDocumentsModule,
     SearchModule,
-    AnnouncementsModule
+    AnnouncementsModule,
+    AttendanceModule,
+    AccountingModule,
+    EstablishmentModule
   ],
   controllers: [],
   providers: [],

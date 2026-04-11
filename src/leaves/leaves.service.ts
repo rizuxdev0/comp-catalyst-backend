@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { LeaveRequest, LeaveRequestStatus } from './entities/leave-request.entity';
@@ -8,6 +9,7 @@ import { CompanySettings } from '../settings/entities/company-settings.entity';
 import { ApprovalsService } from '../approvals/approvals.service';
 import { AuditService } from '../audit/audit.service';
 import { EmployeesService } from '../employees/employees.service';
+import { Employee } from '../employees/entities/employee.entity';
 
 @Injectable()
 export class LeavesService {
@@ -24,6 +26,7 @@ export class LeavesService {
     private dataSource: DataSource,
     private auditService: AuditService,
     private employeesService: EmployeesService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async onModuleInit() {
@@ -168,6 +171,17 @@ export class LeavesService {
 
       const saved = await manager.save(request);
 
+      // Notify employee
+      const employee = await manager.findOne(Employee, { where: { id: saved.employeeId } });
+      if (employee?.userId) {
+        this.eventEmitter.emit('leave.updated', {
+          userId: employee.userId,
+          status: 'approved',
+          leaveType: request.leaveType?.name || 'Congé',
+          startDate: request.startDate,
+        });
+      }
+
       await this.auditService.log({
         action: 'approve',
         entityType: 'leave_request',
@@ -204,6 +218,17 @@ export class LeavesService {
       }
 
       const saved = await manager.save(request);
+
+      // Notify employee
+      const employee = await manager.findOne(Employee, { where: { id: saved.employeeId } });
+      if (employee?.userId) {
+        this.eventEmitter.emit('leave.updated', {
+          userId: employee.userId,
+          status: 'rejected',
+          leaveType: 'Congé', // Would need to load leaveType if not loaded
+          startDate: request.startDate,
+        });
+      }
 
       await this.auditService.log({
         action: 'reject',

@@ -1,5 +1,6 @@
 import { User } from '../../users/entities/user.entity';
 import { Department } from '../../departments/entities/department.entity';
+import { Establishment } from '../../establishments/entities/establishment.entity';
 export declare enum EmployeeStatus {
     ACTIVE = "active",
     ON_LEAVE = "on_leave",
@@ -96,6 +97,8 @@ export declare class Employee {
     job_level: string;
     department_id: string;
     department: Department;
+    establishment_id: string;
+    establishment: Establishment;
     employee_status: EmployeeStatus;
     employment_type: EmploymentType;
     employment_start_date: string;

@@ -164,4 +164,32 @@ export class PayrollController {
     } as any);
     return this.payrollService['deductionRepository'].findOne({ where: { id } });
   }
+
+  // ===================== ON-CALL =====================
+
+  @Post('on-call')
+  @ApiOperation({ summary: 'Log on-call duty hours' })
+  async createOnCall(@Body() data: any) {
+    return this.payrollService.createOnCallDuty(data);
+  }
+
+  @Get('on-call')
+  @ApiOperation({ summary: 'List on-call duties' })
+  async findOnCall(@Query('employeeId') employeeId?: string) {
+    return this.payrollService.findOnCallDuties(employeeId);
+  }
+
+  // ===================== PERFORMANCE BONUSES =====================
+
+  @Post('bonus')
+  @ApiOperation({ summary: 'Create a performance bonus' })
+  async createBonus(@Body() data: any) {
+    return this.payrollService.createPerformanceBonus(data);
+  }
+
+  @Get('performance-bonuses')
+  @ApiOperation({ summary: 'List performance bonuses' })
+  async findBonuses(@Query('employeeId') employeeId?: string) {
+    return this.payrollService.findPerformanceBonuses(employeeId);
+  }
 }

@@ -19,13 +19,24 @@ const employees_module_1 = require("../employees/employees.module");
 const employee_entity_1 = require("../employees/entities/employee.entity");
 const audit_module_1 = require("../audit/audit.module");
 const company_settings_entity_1 = require("../settings/entities/company-settings.entity");
+const on_call_duty_entity_1 = require("./entities/on-call-duty.entity");
+const performance_bonus_entity_1 = require("./entities/performance-bonus.entity");
 let PayrollModule = class PayrollModule {
 };
 exports.PayrollModule = PayrollModule;
 exports.PayrollModule = PayrollModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([payslip_entity_1.PaySlip, employee_entity_1.Employee, premium_type_entity_1.PremiumType, employee_premium_entity_1.EmployeePremium, salary_deduction_entity_1.SalaryDeduction, company_settings_entity_1.CompanySettings]),
+            typeorm_1.TypeOrmModule.forFeature([
+                payslip_entity_1.PaySlip,
+                employee_entity_1.Employee,
+                premium_type_entity_1.PremiumType,
+                employee_premium_entity_1.EmployeePremium,
+                salary_deduction_entity_1.SalaryDeduction,
+                company_settings_entity_1.CompanySettings,
+                on_call_duty_entity_1.OnCallDuty,
+                performance_bonus_entity_1.PerformanceBonus
+            ]),
             (0, common_1.forwardRef)(() => employees_module_1.EmployeesModule),
             audit_module_1.AuditModule,
         ],

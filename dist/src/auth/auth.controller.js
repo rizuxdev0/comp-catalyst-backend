@@ -17,12 +17,55 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
+const constants_1 = require("../common/constants");
 let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async login(req) {
-        return this.authService.login(req.user);
+    async login(req, res) {
+        const data = await this.authService.login(req.user);
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.cookie('access_token', data.access_token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            path: '/',
+        });
+        if (data.refresh_token) {
+            res.cookie('refresh_token', data.refresh_token, {
+                httpOnly: true,
+                secure: isProduction,
+                sameSite: isProduction ? 'none' : 'lax',
+                path: `/${constants_1.API_PREFIX}/auth/refresh`,
+            });
+        }
+        return data;
+    }
+    async refresh(req, res) {
+        const refreshToken = req.cookies?.['refresh_token'] || req.body?.refresh_token;
+        if (!refreshToken) {
+            throw new common_1.UnauthorizedException('Refresh token missing');
+        }
+        const data = await this.authService.refresh(refreshToken);
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.cookie('access_token', data.access_token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            path: '/',
+        });
+        res.cookie('refresh_token', data.refresh_token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            path: `/${constants_1.API_PREFIX}/auth/refresh`,
+        });
+        return data;
+    }
+    async logout(res) {
+        res.clearCookie('access_token', { path: '/' });
+        res.clearCookie('refresh_token', { path: `/${constants_1.API_PREFIX}/auth/refresh` });
+        return { success: true };
     }
     async getProfile(req) {
         return this.authService.getMe(req.user);
@@ -41,10 +84,28 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Login with email and password' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return JWT token and user info' }),
     __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('refresh'),
+    (0, swagger_1.ApiOperation)({ summary: 'Refresh tokens' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "refresh", null);
+__decorate([
+    (0, common_1.Post)('logout'),
+    (0, swagger_1.ApiOperation)({ summary: 'Logout and clear cookies' }),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], AuthController.prototype, "login", null);
+], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Get)('me'),

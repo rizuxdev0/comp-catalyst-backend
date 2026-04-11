@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository, DataSource } from 'typeorm';
 import { LeaveRequest, LeaveRequestStatus } from './entities/leave-request.entity';
 import { LeaveType } from './entities/leave-type.entity';
@@ -15,7 +16,8 @@ export declare class LeavesService {
     private dataSource;
     private auditService;
     private employeesService;
-    constructor(requestRepository: Repository<LeaveRequest>, typeRepository: Repository<LeaveType>, balanceRepository: Repository<LeaveBalance>, companySettingsRepository: Repository<CompanySettings>, approvalsService: ApprovalsService, dataSource: DataSource, auditService: AuditService, employeesService: EmployeesService);
+    private eventEmitter;
+    constructor(requestRepository: Repository<LeaveRequest>, typeRepository: Repository<LeaveType>, balanceRepository: Repository<LeaveBalance>, companySettingsRepository: Repository<CompanySettings>, approvalsService: ApprovalsService, dataSource: DataSource, auditService: AuditService, employeesService: EmployeesService, eventEmitter: EventEmitter2);
     onModuleInit(): Promise<void>;
     private seedTypes;
     findAllTypes(): Promise<LeaveType[]>;
