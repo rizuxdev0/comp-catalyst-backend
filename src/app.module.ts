@@ -45,6 +45,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { EstablishmentModule } from './establishments/establishments.module';
+import { CertificatesModule } from './certificates/certificates.module';
 
 @Module({
   imports: [
@@ -108,7 +109,8 @@ import { EstablishmentModule } from './establishments/establishments.module';
     AnnouncementsModule,
     AttendanceModule,
     AccountingModule,
-    EstablishmentModule
+    EstablishmentModule,
+    CertificatesModule,
   ],
   controllers: [],
   providers: [],

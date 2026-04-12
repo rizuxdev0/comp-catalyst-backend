@@ -34,7 +34,7 @@ export class UsersController {
     return this.usersService.updateRole(id, role);
   }
 
-  @Patch(':id')
+  @Delete(':id')
   @Roles(AppRole.ADMIN)
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   remove(@Param('id') id: string) {

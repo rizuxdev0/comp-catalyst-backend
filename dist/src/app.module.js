@@ -52,6 +52,7 @@ const announcements_module_1 = require("./announcements/announcements.module");
 const attendance_module_1 = require("./attendance/attendance.module");
 const accounting_module_1 = require("./accounting/accounting.module");
 const establishments_module_1 = require("./establishments/establishments.module");
+const certificates_module_1 = require("./certificates/certificates.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -116,7 +117,8 @@ exports.AppModule = AppModule = __decorate([
             announcements_module_1.AnnouncementsModule,
             attendance_module_1.AttendanceModule,
             accounting_module_1.AccountingModule,
-            establishments_module_1.EstablishmentModule
+            establishments_module_1.EstablishmentModule,
+            certificates_module_1.CertificatesModule,
         ],
         controllers: [],
         providers: [],

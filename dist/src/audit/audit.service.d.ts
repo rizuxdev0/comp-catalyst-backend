@@ -5,4 +5,5 @@ export declare class AuditService {
     constructor(auditRepository: Repository<AuditLog>);
     log(data: Partial<AuditLog>): Promise<AuditLog>;
     findAll(filters: any): Promise<AuditLog[]>;
+    clearUserReferences(userId: string): Promise<void>;
 }

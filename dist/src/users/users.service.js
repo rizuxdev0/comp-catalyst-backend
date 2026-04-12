@@ -220,16 +220,39 @@ let UsersService = class UsersService {
         if (existingUser) {
             throw new common_1.ConflictException('User with this email already exists');
         }
-        const user = this.usersRepository.create(userData);
+        const generatePassword = () => {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+            return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        };
+        const defaultPassword = userData.password || generatePassword();
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
+        const user = this.usersRepository.create({
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            passwordHash: passwordHash,
+            isActive: true,
+            emailVerified: true,
+            passwordStatus: user_entity_2.PasswordStatus.MUST_CHANGE,
+            mustChangePassword: true,
+        });
         const saved = await this.usersRepository.save(user);
+        if (userData.role) {
+            const role = this.rolesRepository.create({
+                userId: saved.id,
+                role: userData.role,
+            });
+            await this.rolesRepository.save(role);
+        }
         await this.auditService.log({
             action: 'create',
             entityType: 'user',
             entityId: saved.id,
             entityName: saved.email,
-            newValues: userData,
+            newValues: { ...userData, passwordHash: undefined },
         });
-        return saved;
+        const finalUser = await this.findOne(saved.id);
+        return { ...finalUser, generatedPassword: defaultPassword };
     }
     async findAll() {
         return this.usersRepository.find({
@@ -243,11 +266,13 @@ let UsersService = class UsersService {
         });
     }
     async findOneWithPassword(email) {
-        return this.usersRepository.findOne({
-            where: { email },
-            select: ['id', 'email', 'passwordHash', 'isActive', 'passwordStatus'],
-            relations: ['roles'],
-        });
+        return this.usersRepository.createQueryBuilder('user')
+            .where('user.email = :email', { email })
+            .leftJoinAndSelect('user.roles', 'roles')
+            .addSelect('user.passwordHash')
+            .addSelect('user.passwordStatus')
+            .addSelect('user.mustChangePassword')
+            .getOne();
     }
     async findAllPermissions() {
         return this.permissionsRepository.find({ order: { module: 'ASC', name: 'ASC' } });
@@ -395,7 +420,8 @@ let UsersService = class UsersService {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await this.usersRepository.update(userId, {
             passwordHash: hashedPassword,
-            passwordStatus: user_entity_2.PasswordStatus.ACTIVE
+            passwordStatus: user_entity_2.PasswordStatus.ACTIVE,
+            mustChangePassword: false
         });
         await this.auditService.log({
             action: 'change_password',
@@ -423,6 +449,7 @@ let UsersService = class UsersService {
     }
     async remove(id) {
         const user = await this.findOne(id);
+        await this.auditService.clearUserReferences(id);
         await this.usersRepository.remove(user);
         await this.auditService.log({
             action: 'delete',

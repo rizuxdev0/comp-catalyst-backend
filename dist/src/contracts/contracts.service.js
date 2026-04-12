@@ -97,6 +97,11 @@ let ContractsService = class ContractsService {
     }
     async create(createContractDto) {
         const contract = this.contractRepository.create(createContractDto);
+        if (!contract.contractNumber) {
+            const year = new Date().getFullYear();
+            const count = await this.contractRepository.count();
+            contract.contractNumber = `CONT-${year}-${String(count + 1).padStart(4, '0')}`;
+        }
         const saved = await this.contractRepository.save(contract);
         await this.auditService.log({
             action: 'create',

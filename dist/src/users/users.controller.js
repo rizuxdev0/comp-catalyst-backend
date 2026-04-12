@@ -72,7 +72,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateRole", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)(user_role_entity_1.AppRole.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Delete user (Admin only)' }),
     __param(0, (0, common_1.Param)('id')),

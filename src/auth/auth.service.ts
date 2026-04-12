@@ -38,7 +38,9 @@ export class AuthService {
     const payload = { 
       sub: user.id, 
       email: user.email,
-      roles: roles
+      roles: roles,
+      passwordStatus: user.passwordStatus,
+      mustChangePassword: user.mustChangePassword
     };
     const response = {
       access_token: this.jwtService.sign(payload),
@@ -49,7 +51,9 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: roles,
-        permissions: permissions
+        permissions: permissions,
+        passwordStatus: user.passwordStatus,
+        mustChangePassword: user.mustChangePassword
       }
     };
     this.eventEmitter.emit('audit.log', {
@@ -94,7 +98,8 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       roles: roles,
-      permissions: permissions
+      permissions: permissions,
+      passwordStatus: user.passwordStatus
     };
   }
 

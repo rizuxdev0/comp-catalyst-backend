@@ -91,6 +91,14 @@ export class ContractsService implements OnModuleInit {
 
   async create(createContractDto: Partial<Contract>): Promise<Contract> {
     const contract = this.contractRepository.create(createContractDto);
+    
+    // Auto-generate contract number if not provided
+    if (!contract.contractNumber) {
+      const year = new Date().getFullYear();
+      const count = await this.contractRepository.count();
+      contract.contractNumber = `CONT-${year}-${String(count + 1).padStart(4, '0')}`;
+    }
+
     const saved = await this.contractRepository.save(contract);
     
     // AUDIT LOG

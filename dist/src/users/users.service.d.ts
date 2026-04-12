@@ -23,7 +23,7 @@ export declare class UsersService implements OnModuleInit {
     private seedRolePermissions;
     private seedPermissions;
     private seedAdmin;
-    create(userData: Partial<User>): Promise<User>;
+    create(userData: any): Promise<any>;
     findAll(): Promise<User[]>;
     findByEmail(email: string): Promise<User | null>;
     findOneWithPassword(email: string): Promise<User | null>;

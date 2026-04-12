@@ -19,6 +19,8 @@ export declare class AuthService {
             lastName: any;
             roles: any;
             permissions: string[];
+            passwordStatus: any;
+            mustChangePassword: any;
         };
     }>;
     refresh(token: string): Promise<{
@@ -32,6 +34,7 @@ export declare class AuthService {
         lastName: any;
         roles: any;
         permissions: string[];
+        passwordStatus: any;
     }>;
     forgotPassword(email: string): Promise<{
         message: string;

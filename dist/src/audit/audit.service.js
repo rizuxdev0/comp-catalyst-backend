@@ -34,6 +34,13 @@ let AuditService = class AuditService {
             take: 100,
         });
     }
+    async clearUserReferences(userId) {
+        await this.auditRepository.createQueryBuilder()
+            .update(audit_log_entity_1.AuditLog)
+            .set({ userId: null })
+            .where("user_id = :userId", { userId })
+            .execute();
+    }
 };
 exports.AuditService = AuditService;
 __decorate([

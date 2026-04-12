@@ -25,4 +25,12 @@ export class AuditService {
       take: 100, // Limit for performance
     });
   }
+
+  async clearUserReferences(userId: string): Promise<void> {
+    await this.auditRepository.createQueryBuilder()
+      .update(AuditLog)
+      .set({ userId: null } as any)
+      .where("user_id = :userId", { userId })
+      .execute();
+  }
 }

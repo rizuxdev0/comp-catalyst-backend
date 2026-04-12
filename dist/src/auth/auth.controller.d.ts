@@ -12,6 +12,8 @@ export declare class AuthController {
             lastName: any;
             roles: any;
             permissions: string[];
+            passwordStatus: any;
+            mustChangePassword: any;
         };
     }>;
     refresh(req: any, res: any): Promise<{
@@ -28,6 +30,7 @@ export declare class AuthController {
         lastName: any;
         roles: any;
         permissions: string[];
+        passwordStatus: any;
     }>;
     forgotPassword(email: string): Promise<{
         message: string;

@@ -238,21 +238,53 @@ export class UsersService implements OnModuleInit {
     }
   }
 
-  async create(userData: Partial<User>): Promise<User> {
+  async create(userData: any): Promise<any> {
     const existingUser = await this.findByEmail(userData.email);
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
-    const user = this.usersRepository.create(userData);
+    
+    // Generate a random default password if none is provided
+    const generatePassword = () => {
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+      return Array.from({length: 10}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    };
+    const defaultPassword = userData.password || generatePassword();
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
+    
+    // Create the user
+    const user = this.usersRepository.create({
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      passwordHash: passwordHash,
+      isActive: true,
+      emailVerified: true,
+      passwordStatus: PasswordStatus.MUST_CHANGE,
+      mustChangePassword: true,
+    });
+    
     const saved = await this.usersRepository.save(user);
+    
+    // Create the role if provided
+    if (userData.role) {
+      const role = this.rolesRepository.create({
+        userId: saved.id,
+        role: userData.role as AppRole,
+      });
+      await this.rolesRepository.save(role);
+    }
+    
     await this.auditService.log({
       action: 'create',
       entityType: 'user',
       entityId: saved.id,
       entityName: saved.email,
-      newValues: userData,
+      newValues: { ...userData, passwordHash: undefined },
     });
-    return saved;
+    
+    const finalUser = await this.findOne(saved.id);
+    return { ...finalUser, generatedPassword: defaultPassword };
   }
 
   async findAll(): Promise<User[]> {
@@ -269,11 +301,13 @@ export class UsersService implements OnModuleInit {
   }
 
   async findOneWithPassword(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'passwordHash', 'isActive', 'passwordStatus'],
-      relations: ['roles'],
-    });
+    return this.usersRepository.createQueryBuilder('user')
+      .where('user.email = :email', { email })
+      .leftJoinAndSelect('user.roles', 'roles')
+      .addSelect('user.passwordHash')
+      .addSelect('user.passwordStatus') // ensure it's explicitly loaded if missing
+      .addSelect('user.mustChangePassword')
+      .getOne();
   }
 
   async findAllPermissions(): Promise<Permission[]> {
@@ -445,7 +479,8 @@ export class UsersService implements OnModuleInit {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.usersRepository.update(userId, { 
       passwordHash: hashedPassword,
-      passwordStatus: PasswordStatus.ACTIVE
+      passwordStatus: PasswordStatus.ACTIVE,
+      mustChangePassword: false
     });
     await this.auditService.log({
       action: 'change_password',
@@ -475,6 +510,7 @@ export class UsersService implements OnModuleInit {
 
   async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
+    await this.auditService.clearUserReferences(id);
     await this.usersRepository.remove(user);
     await this.auditService.log({
       action: 'delete',
