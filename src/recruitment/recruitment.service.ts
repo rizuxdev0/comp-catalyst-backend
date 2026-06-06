@@ -107,7 +107,7 @@ export class RecruitmentService {
     return this.findOneApplication(saved.id);
   }
 
-  async updateApplicationStatus(id: string, status: ApplicationStatus, notes?: string): Promise<JobApplication> {
+  async updateApplicationStatus(id: string, status: string, notes?: string): Promise<JobApplication> {
     const app = await this.findOneApplication(id);
     await this.applicationRepository.update(id, { status, notes: notes || app.notes });
     

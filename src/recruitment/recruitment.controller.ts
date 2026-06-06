@@ -83,7 +83,7 @@ export class RecruitmentController {
   @ApiOperation({ summary: 'Update job application status' })
   async updateApplicationStatus(
     @Param('id') id: string,
-    @Body('status') status: ApplicationStatus,
+    @Body('status') status: string,
     @Body('notes') notes?: string,
   ) {
     return this.recruitmentService.updateApplicationStatus(id, status, notes);

@@ -15,7 +15,9 @@ const job_posting_entity_1 = require("./job-posting.entity");
 var ApplicationStatus;
 (function (ApplicationStatus) {
     ApplicationStatus["PENDING"] = "pending";
+    ApplicationStatus["SCREENING"] = "screening";
     ApplicationStatus["INTERVIEW"] = "interview";
+    ApplicationStatus["TESTING"] = "testing";
     ApplicationStatus["OFFER"] = "offer";
     ApplicationStatus["HIRED"] = "hired";
     ApplicationStatus["REJECTED"] = "rejected";
@@ -50,8 +52,8 @@ __decorate([
 ], JobApplication.prototype, "candidatePhone", void 0);
 __decorate([
     (0, typeorm_1.Column)({
-        type: 'enum',
-        enum: ApplicationStatus,
+        type: 'varchar',
+        length: 20,
         default: ApplicationStatus.PENDING,
     }),
     __metadata("design:type", String)

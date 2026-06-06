@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { JobPosting } from './entities/job-posting.entity';
-import { JobApplication, ApplicationStatus } from './entities/job-application.entity';
+import { JobApplication } from './entities/job-application.entity';
 import { TalentPool } from './entities/talent-pool.entity';
 import { CandidateEvaluation } from './entities/candidate-evaluation.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -23,7 +23,7 @@ export declare class RecruitmentService {
     findApplicationsByPosting(postingId: string): Promise<JobApplication[]>;
     findOneApplication(id: string): Promise<JobApplication>;
     createApplication(data: Partial<JobApplication>): Promise<JobApplication>;
-    updateApplicationStatus(id: string, status: ApplicationStatus, notes?: string): Promise<JobApplication>;
+    updateApplicationStatus(id: string, status: string, notes?: string): Promise<JobApplication>;
     sendApplicationEmail(id: string, subject: string, body: string): Promise<any>;
     findAllTalent(): Promise<TalentPool[]>;
     findOneTalent(id: string): Promise<TalentPool>;

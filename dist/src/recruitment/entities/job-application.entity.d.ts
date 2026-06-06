@@ -1,7 +1,9 @@
 import { JobPosting } from './job-posting.entity';
 export declare enum ApplicationStatus {
     PENDING = "pending",
+    SCREENING = "screening",
     INTERVIEW = "interview",
+    TESTING = "testing",
     OFFER = "offer",
     HIRED = "hired",
     REJECTED = "rejected"
@@ -13,7 +15,7 @@ export declare class JobApplication {
     candidateName: string;
     candidateEmail: string;
     candidatePhone: string;
-    status: ApplicationStatus;
+    status: string;
     notes: string;
     interviewDate: Date;
     score: number;

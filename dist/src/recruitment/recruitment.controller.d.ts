@@ -1,5 +1,5 @@
 import { RecruitmentService } from './recruitment.service';
-import { JobApplication, ApplicationStatus } from './entities/job-application.entity';
+import { JobApplication } from './entities/job-application.entity';
 import { TalentPool } from './entities/talent-pool.entity';
 import { CandidateEvaluation } from './entities/candidate-evaluation.entity';
 export declare class RecruitmentController {
@@ -14,7 +14,7 @@ export declare class RecruitmentController {
     findAllApplications(postingId?: string): Promise<JobApplication[]>;
     findOneApplication(id: string): Promise<JobApplication>;
     createApplication(data: any): Promise<JobApplication>;
-    updateApplicationStatus(id: string, status: ApplicationStatus, notes?: string): Promise<JobApplication>;
+    updateApplicationStatus(id: string, status: string, notes?: string): Promise<JobApplication>;
     sendApplicationEmail(id: string, subject: string, body: string): Promise<any>;
     findAllTalent(): Promise<TalentPool[]>;
     findOneTalent(id: string): Promise<TalentPool>;

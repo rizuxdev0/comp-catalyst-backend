@@ -3,7 +3,9 @@ import { JobPosting } from './job-posting.entity';
 
 export enum ApplicationStatus {
   PENDING = 'pending',
+  SCREENING = 'screening',
   INTERVIEW = 'interview',
+  TESTING = 'testing',
   OFFER = 'offer',
   HIRED = 'hired',
   REJECTED = 'rejected',
@@ -31,11 +33,11 @@ export class JobApplication {
   candidatePhone: string;
 
   @Column({
-    type: 'enum',
-    enum: ApplicationStatus,
+    type: 'varchar',
+    length: 20,
     default: ApplicationStatus.PENDING,
   })
-  status: ApplicationStatus;
+  status: string;
 
   @Column({ type: 'text', nullable: true })
   notes: string;

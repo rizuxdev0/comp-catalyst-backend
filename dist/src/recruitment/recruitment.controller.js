@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const passport_1 = require("@nestjs/passport");
 const recruitment_service_1 = require("./recruitment.service");
-const job_application_entity_1 = require("./entities/job-application.entity");
 const roles_guard_1 = require("../common/guards/roles.guard");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const user_role_entity_1 = require("../users/entities/user-role.entity");
