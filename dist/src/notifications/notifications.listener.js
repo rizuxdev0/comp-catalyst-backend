@@ -53,6 +53,80 @@ let NotificationsListener = NotificationsListener_1 = class NotificationsListene
             }
         }
     }
+    async handleLeaveCreated(payload) {
+        const { adminIds, employeeName, leaveType, startDate } = payload;
+        const title = 'Nouvelle demande de congé';
+        const message = `${employeeName} a effectué une nouvelle demande de congé (${leaveType}) débutant le ${new Date(startDate).toLocaleDateString()}.`;
+        for (const adminId of adminIds) {
+            await this.notificationsService.create({
+                userId: adminId,
+                title,
+                message,
+                type: 'info',
+                category: 'leave',
+            });
+        }
+    }
+    async handleCertificateCreated(payload) {
+        const { adminIds, employeeName, certType } = payload;
+        const typeMap = {
+            'WORK_CERTIFICATE': 'Attestation de travail',
+            'SALARY_CERTIFICATE': 'Attestation de salaire',
+            'EMPLOYMENT_LETTER': 'Lettre d\'emploi',
+            'EXPERIENCE_CERTIFICATE': 'Certificat d\'expérience',
+            'BANK_DOMICILIATION': 'Attestation de domiciliation bancaire'
+        };
+        const friendlyType = typeMap[certType] || certType;
+        const title = 'Nouvelle demande de document';
+        const message = `${employeeName} a effectué une nouvelle demande pour : ${friendlyType}.`;
+        for (const adminId of adminIds) {
+            await this.notificationsService.create({
+                userId: adminId,
+                title,
+                message,
+                type: 'info',
+                category: 'document',
+            });
+        }
+    }
+    async handleCertificateUpdated(payload) {
+        const { userId, status, certType } = payload;
+        const typeMap = {
+            'WORK_CERTIFICATE': 'Attestation de travail',
+            'SALARY_CERTIFICATE': 'Attestation de salaire',
+            'EMPLOYMENT_LETTER': 'Lettre d\'emploi',
+            'EXPERIENCE_CERTIFICATE': 'Certificat d\'expérience',
+            'BANK_DOMICILIATION': 'Attestation de domiciliation bancaire'
+        };
+        const friendlyType = typeMap[certType] || certType;
+        let title = '';
+        let message = '';
+        let type = 'info';
+        if (status === 'ready') {
+            title = 'Document disponible';
+            message = `Votre demande pour le document "${friendlyType}" est prête. Vous pouvez la télécharger.`;
+            type = 'success';
+        }
+        else if (status === 'rejected') {
+            title = 'Demande de document refusée';
+            message = `Votre demande pour le document "${friendlyType}" a été refusée.`;
+            type = 'error';
+        }
+        else if (status === 'processing') {
+            title = 'Demande de document en cours';
+            message = `Votre demande pour le document "${friendlyType}" est actuellement en cours de traitement.`;
+            type = 'info';
+        }
+        if (title) {
+            await this.notificationsService.create({
+                userId,
+                title,
+                message,
+                type,
+                category: 'document',
+            });
+        }
+    }
     async handlePayrollFinalized(payload) {
         const { userId, month, year } = payload;
         await this.notificationsService.create({
@@ -81,6 +155,24 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], NotificationsListener.prototype, "handleLeaveUpdated", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('leave.created'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsListener.prototype, "handleLeaveCreated", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('certificate.created'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsListener.prototype, "handleCertificateCreated", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('certificate.updated'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsListener.prototype, "handleCertificateUpdated", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('payroll.finalized'),
     __metadata("design:type", Function),

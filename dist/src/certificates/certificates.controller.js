@@ -34,8 +34,8 @@ let CertificatesController = class CertificatesController {
     async create(req, data) {
         return this.certificatesService.create(req.user.id, data);
     }
-    async updateStatus(req, id, status, rejectionReason) {
-        return this.certificatesService.updateStatus(id, status, req.user.id, rejectionReason);
+    async updateStatus(req, id, status, rejectionReason, content) {
+        return this.certificatesService.updateStatus(id, status, req.user.id, rejectionReason, content);
     }
 };
 exports.CertificatesController = CertificatesController;
@@ -75,8 +75,9 @@ __decorate([
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)('status')),
     __param(3, (0, common_1.Body)('rejectionReason')),
+    __param(4, (0, common_1.Body)('content')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CertificatesController.prototype, "updateStatus", null);
 exports.CertificatesController = CertificatesController = __decorate([

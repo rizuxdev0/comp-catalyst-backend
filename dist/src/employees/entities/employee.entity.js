@@ -100,7 +100,7 @@ __decorate([
     __metadata("design:type", String)
 ], Employee.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: true }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
     (0, swagger_1.ApiProperty)({ type: () => user_entity_1.User, required: false }),
     __metadata("design:type", user_entity_1.User)

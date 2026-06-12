@@ -46,6 +46,10 @@ export class CertificateRequest {
   @Column({ name: 'rejection_reason', nullable: true })
   rejectionReason: string;
 
+  @Column({ type: 'text', nullable: true })
+  @ApiProperty({ required: false })
+  content: string;
+
   @Column({ name: 'document_url', nullable: true })
   documentUrl: string;
 

@@ -127,6 +127,10 @@ export class CompanySettings {
   @ApiProperty({ example: 2.5 })
   default_monthly_leave_accrual: number;
 
+  @Column({ name: 'default_salary_payment_day', type: 'int', default: 25 })
+  @ApiProperty({ example: 25, description: 'Le quantième du mois (1-31) pour le paiement par défaut des salaires' })
+  default_salary_payment_day: number;
+
   @Column({ name: 'print_settings', type: 'jsonb', nullable: true })
   @ApiProperty({ required: false })
   print_settings: any;

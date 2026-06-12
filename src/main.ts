@@ -26,19 +26,25 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger Configuration
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('PayrollPro API')
-    .setDescription('The internal HR and Payroll Management API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup(`${API_PREFIX}/docs`, app, document);
+  // Swagger Configuration: Only mount in dev or when explicitly requested
+  if (configService.get<string>('NODE_ENV') !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('PayrollPro API')
+      .setDescription('The internal HR and Payroll Management API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup(`${API_PREFIX}/docs`, app, document);
+  }
 
   // Enable CORS
+  const isProduction = configService.get<string>('NODE_ENV') === 'production';
   app.enableCors({
-    origin: true,
+    // Replace with specific production frontend origin once deployed
+    origin: isProduction 
+      ? [process.env.FRONTEND_URL || 'https://votre-domaine.com'] 
+      : true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

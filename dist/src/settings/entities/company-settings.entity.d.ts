@@ -30,6 +30,7 @@ export declare class CompanySettings {
     sick_leave_days: number;
     fiscal_year_start_month: number;
     default_monthly_leave_accrual: number;
+    default_salary_payment_day: number;
     print_settings: any;
     is_initialized: boolean;
     default_working_days_per_week: number;

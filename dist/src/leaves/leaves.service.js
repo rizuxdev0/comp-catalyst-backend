@@ -112,8 +112,8 @@ let LeavesService = class LeavesService {
                 await manager.save(balance);
             }
             const settings = await manager.findOne(company_settings_entity_1.CompanySettings, { where: {} });
+            const leaveType = await manager.findOne(leave_type_entity_1.LeaveType, { where: { id: leaveTypeId } });
             if (settings?.leave_approval_mode === 'workflow') {
-                const leaveType = await manager.findOne(leave_type_entity_1.LeaveType, { where: { id: leaveTypeId } });
                 await this.approvalsService.createRequest({
                     module: 'leaves',
                     entityId: savedRequest.id,
@@ -128,6 +128,18 @@ let LeavesService = class LeavesService {
                 entityName: `Demande de congé - ${employeeId}`,
                 newValues: data,
             });
+            try {
+                const managersAndAdmins = await manager.query("SELECT id FROM users WHERE role IN ('admin', 'manager')");
+                this.eventEmitter.emit('leave.created', {
+                    adminIds: managersAndAdmins.map((u) => u.id),
+                    employeeName: `${employee.first_name} ${employee.last_name}`,
+                    leaveType: leaveType?.name || 'Congé',
+                    startDate: startDate,
+                });
+            }
+            catch (e) {
+                console.error('Failed to dispatch leave.created event', e);
+            }
             return savedRequest;
         });
     }

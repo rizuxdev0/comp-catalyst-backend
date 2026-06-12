@@ -44,7 +44,8 @@ export class CertificatesController {
     @Param('id') id: string,
     @Body('status') status: CertificateRequestStatus,
     @Body('rejectionReason') rejectionReason?: string,
+    @Body('content') content?: string,
   ) {
-    return this.certificatesService.updateStatus(id, status, req.user.id, rejectionReason);
+    return this.certificatesService.updateStatus(id, status, req.user.id, rejectionReason, content);
   }
 }

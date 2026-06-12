@@ -11,6 +11,22 @@ export declare class NotificationsListener {
         leaveType: string;
         startDate: string;
     }): Promise<void>;
+    handleLeaveCreated(payload: {
+        adminIds: string[];
+        employeeName: string;
+        leaveType: string;
+        startDate: string;
+    }): Promise<void>;
+    handleCertificateCreated(payload: {
+        adminIds: string[];
+        employeeName: string;
+        certType: string;
+    }): Promise<void>;
+    handleCertificateUpdated(payload: {
+        userId: string;
+        status: string;
+        certType: string;
+    }): Promise<void>;
     handlePayrollFinalized(payload: {
         userId: string;
         month: string;

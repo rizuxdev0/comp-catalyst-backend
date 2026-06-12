@@ -171,6 +171,11 @@ __decorate([
     __metadata("design:type", Number)
 ], CompanySettings.prototype, "default_monthly_leave_accrual", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'default_salary_payment_day', type: 'int', default: 25 }),
+    (0, swagger_1.ApiProperty)({ example: 25, description: 'Le quantième du mois (1-31) pour le paiement par défaut des salaires' }),
+    __metadata("design:type", Number)
+], CompanySettings.prototype, "default_salary_payment_day", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'print_settings', type: 'jsonb', nullable: true }),
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", Object)

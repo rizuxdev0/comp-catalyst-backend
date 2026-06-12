@@ -45,7 +45,7 @@ export class JobApplication {
   @Column({ name: 'interview_date', type: 'timestamp', nullable: true })
   interviewDate: Date;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'float', nullable: true })
   score: number;
 
   @Column({ name: 'cv_url', nullable: true })

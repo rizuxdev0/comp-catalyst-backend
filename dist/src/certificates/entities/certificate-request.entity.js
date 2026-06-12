@@ -67,6 +67,11 @@ __decorate([
     __metadata("design:type", String)
 ], CertificateRequest.prototype, "rejectionReason", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], CertificateRequest.prototype, "content", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'document_url', nullable: true }),
     __metadata("design:type", String)
 ], CertificateRequest.prototype, "documentUrl", void 0);

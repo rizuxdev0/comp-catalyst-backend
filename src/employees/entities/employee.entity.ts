@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, ManyToOne, JoinColumn, BeforeInsert } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/entities/user.entity';
 import { Department } from '../../departments/entities/department.entity';
@@ -80,7 +80,7 @@ export class Employee {
   @Column({ name: 'user_id', nullable: true })
   userId: string;
 
-  @ManyToOne(() => User, { nullable: true })
+  @OneToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'user_id' })
   @ApiProperty({ type: () => User, required: false })
   user: User;

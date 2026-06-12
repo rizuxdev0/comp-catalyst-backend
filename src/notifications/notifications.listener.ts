@@ -41,16 +41,103 @@ export class NotificationsListener {
       });
 
       // 2. Email (transactionnel)
-      // Try to get user pref and email - implementation simplified
       try {
-        // Envoi email réel via le service Mail
         const body = `<h2>${title}</h2><p>${message}</p>`;
-        // In a real app we'd fetch the user's email first
-        // await this.mailService.sendMail(user.email, title, body, {});
         this.logger.log(`Transactional email would be sent to user ${userId}: ${title}`);
       } catch (err) {
         this.logger.error(`Failed to send transactional email to ${userId}`, err);
       }
+    }
+  }
+
+  @OnEvent('leave.created')
+  async handleLeaveCreated(payload: { adminIds: string[]; employeeName: string; leaveType: string; startDate: string }) {
+    const { adminIds, employeeName, leaveType, startDate } = payload;
+    
+    const title = 'Nouvelle demande de congé';
+    const message = `${employeeName} a effectué une nouvelle demande de congé (${leaveType}) débutant le ${new Date(startDate).toLocaleDateString()}.`;
+    
+    // Notify all admins and managers
+    for (const adminId of adminIds) {
+      await this.notificationsService.create({
+        userId: adminId,
+        title,
+        message,
+        type: 'info',
+        category: 'leave',
+      });
+    }
+  }
+
+  @OnEvent('certificate.created')
+  async handleCertificateCreated(payload: { adminIds: string[]; employeeName: string; certType: string }) {
+    const { adminIds, employeeName, certType } = payload;
+    
+    // Convert generic technical types to user-friendly names
+    const typeMap: Record<string, string> = {
+      'WORK_CERTIFICATE': 'Attestation de travail',
+      'SALARY_CERTIFICATE': 'Attestation de salaire',
+      'EMPLOYMENT_LETTER': 'Lettre d\'emploi',
+      'EXPERIENCE_CERTIFICATE': 'Certificat d\'expérience',
+      'BANK_DOMICILIATION': 'Attestation de domiciliation bancaire'
+    };
+    
+    const friendlyType = typeMap[certType] || certType;
+
+    const title = 'Nouvelle demande de document';
+    const message = `${employeeName} a effectué une nouvelle demande pour : ${friendlyType}.`;
+    
+    for (const adminId of adminIds) {
+      await this.notificationsService.create({
+        userId: adminId,
+        title,
+        message,
+        type: 'info',
+        category: 'document',
+      });
+    }
+  }
+
+  @OnEvent('certificate.updated')
+  async handleCertificateUpdated(payload: { userId: string; status: string; certType: string }) {
+    const { userId, status, certType } = payload;
+    
+    const typeMap: Record<string, string> = {
+      'WORK_CERTIFICATE': 'Attestation de travail',
+      'SALARY_CERTIFICATE': 'Attestation de salaire',
+      'EMPLOYMENT_LETTER': 'Lettre d\'emploi',
+      'EXPERIENCE_CERTIFICATE': 'Certificat d\'expérience',
+      'BANK_DOMICILIATION': 'Attestation de domiciliation bancaire'
+    };
+    
+    const friendlyType = typeMap[certType] || certType;
+    
+    let title = '';
+    let message = '';
+    let type = 'info';
+
+    if (status === 'ready') {
+      title = 'Document disponible';
+      message = `Votre demande pour le document "${friendlyType}" est prête. Vous pouvez la télécharger.`;
+      type = 'success';
+    } else if (status === 'rejected') {
+      title = 'Demande de document refusée';
+      message = `Votre demande pour le document "${friendlyType}" a été refusée.`;
+      type = 'error';
+    } else if (status === 'processing') {
+      title = 'Demande de document en cours';
+      message = `Votre demande pour le document "${friendlyType}" est actuellement en cours de traitement.`;
+      type = 'info';
+    }
+
+    if (title) {
+      await this.notificationsService.create({
+        userId,
+        title,
+        message,
+        type,
+        category: 'document',
+      });
     }
   }
 

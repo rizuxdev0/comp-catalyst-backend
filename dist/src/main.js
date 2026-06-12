@@ -17,16 +17,21 @@ async function bootstrap() {
     app.useGlobalPipes(new common_1.ValidationPipe({
         transform: true,
     }));
-    const swaggerConfig = new swagger_1.DocumentBuilder()
-        .setTitle('PayrollPro API')
-        .setDescription('The internal HR and Payroll Management API')
-        .setVersion('1.0')
-        .addBearerAuth()
-        .build();
-    const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
-    swagger_1.SwaggerModule.setup(`${constants_1.API_PREFIX}/docs`, app, document);
+    if (configService.get('NODE_ENV') !== 'production') {
+        const swaggerConfig = new swagger_1.DocumentBuilder()
+            .setTitle('PayrollPro API')
+            .setDescription('The internal HR and Payroll Management API')
+            .setVersion('1.0')
+            .addBearerAuth()
+            .build();
+        const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
+        swagger_1.SwaggerModule.setup(`${constants_1.API_PREFIX}/docs`, app, document);
+    }
+    const isProduction = configService.get('NODE_ENV') === 'production';
     app.enableCors({
-        origin: true,
+        origin: isProduction
+            ? [process.env.FRONTEND_URL || 'https://votre-domaine.com']
+            : true,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });

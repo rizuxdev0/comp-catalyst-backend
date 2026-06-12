@@ -15,6 +15,7 @@ export declare class CertificateRequest {
     status: CertificateRequestStatus;
     processedBy: string;
     rejectionReason: string;
+    content: string;
     documentUrl: string;
     createdAt: Date;
     updatedAt: Date;

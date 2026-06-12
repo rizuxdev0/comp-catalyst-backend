@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CertificateRequest, CertificateRequestStatus } from './entities/certificate-request.entity';
 import { Employee } from '../employees/entities/employee.entity';
 
@@ -11,6 +12,8 @@ export class CertificatesService {
     private readonly certRepo: Repository<CertificateRequest>,
     @InjectRepository(Employee)
     private readonly employeeRepo: Repository<Employee>,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findMyRequests(userId: string): Promise<CertificateRequest[]> {
@@ -39,15 +42,45 @@ export class CertificatesService {
       employeeId: employee.id,
       status: CertificateRequestStatus.PENDING,
     });
-    return this.certRepo.save(request);
+    const saved = await this.certRepo.save(request);
+
+    try {
+      const managersAndAdmins = await this.dataSource.query(
+        "SELECT id FROM users WHERE role IN ('admin', 'manager')"
+      );
+      this.eventEmitter.emit('certificate.created', {
+        adminIds: managersAndAdmins.map((u: any) => u.id),
+        employeeName: `${employee.first_name} ${employee.last_name}`,
+        certType: saved.type,
+      });
+    } catch(e) {
+      console.error('Failed to dispatch certificate.created event', e);
+    }
+
+    return saved;
   }
 
-  async updateStatus(id: string, status: CertificateRequestStatus, processedBy?: string, rejectionReason?: string): Promise<CertificateRequest> {
-    const cert = await this.certRepo.findOne({ where: { id } });
+  async updateStatus(id: string, status: CertificateRequestStatus, processedBy?: string, rejectionReason?: string, content?: string): Promise<CertificateRequest> {
+    const cert = await this.certRepo.findOne({ where: { id }, relations: ['employee'] });
     if (!cert) throw new NotFoundException('Demande non trouvée');
     cert.status = status;
     if (processedBy) cert.processedBy = processedBy;
-    if (rejectionReason) cert.rejectionReason = rejectionReason;
-    return this.certRepo.save(cert);
+    if (rejectionReason !== undefined) cert.rejectionReason = rejectionReason;
+    if (content !== undefined) cert.content = content;
+    const saved = await this.certRepo.save(cert);
+
+    try {
+      if (cert.employee && cert.employee.userId) {
+        this.eventEmitter.emit('certificate.updated', {
+          userId: cert.employee.userId,
+          status: saved.status,
+          certType: saved.type,
+        });
+      }
+    } catch(e) {
+      console.error('Failed to dispatch certificate.updated event', e);
+    }
+
+    return saved;
   }
 }

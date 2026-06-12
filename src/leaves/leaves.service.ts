@@ -121,8 +121,9 @@ export class LeavesService {
 
       // Check approval mode
       const settings = await manager.findOne(CompanySettings, { where: {} });
+      const leaveType = await manager.findOne(LeaveType, { where: { id: leaveTypeId } });
+      
       if (settings?.leave_approval_mode === 'workflow') {
-        const leaveType = await manager.findOne(LeaveType, { where: { id: leaveTypeId } });
         await this.approvalsService.createRequest({
           module: 'leaves',
           entityId: savedRequest.id,
@@ -138,6 +139,21 @@ export class LeavesService {
         entityName: `Demande de congé - ${employeeId}`,
         newValues: data,
       });
+
+      // Fetch Admins and Managers to notify
+      try {
+        const managersAndAdmins = await manager.query(
+          "SELECT id FROM users WHERE role IN ('admin', 'manager')"
+        );
+        this.eventEmitter.emit('leave.created', {
+          adminIds: managersAndAdmins.map((u: any) => u.id),
+          employeeName: `${employee.first_name} ${employee.last_name}`,
+          leaveType: leaveType?.name || 'Congé',
+          startDate: startDate,
+        });
+      } catch (e) {
+        console.error('Failed to dispatch leave.created event', e);
+      }
 
       return savedRequest;
     });

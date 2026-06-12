@@ -67,7 +67,7 @@ __decorate([
     __metadata("design:type", Date)
 ], JobApplication.prototype, "interviewDate", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'int', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'float', nullable: true }),
     __metadata("design:type", Number)
 ], JobApplication.prototype, "score", void 0);
 __decorate([
