@@ -62,7 +62,7 @@ import { CertificatesModule } from './certificates/certificates.module';
         database: config.get<string>('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-        synchronize: config.get<string>('NODE_ENV') === 'development',
+        synchronize: false,
         logging: config.get<string>('NODE_ENV') === 'development',
       }),
     }),

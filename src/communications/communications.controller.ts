@@ -13,6 +13,12 @@ import { CommunicationsService } from './communications.service';
 export class CommunicationsController {
   constructor(private readonly service: CommunicationsService) {}
 
+  @Get('me')
+  @ApiOperation({ summary: 'Lister les communications de l\'employé' })
+  findForEmployee(@Request() req: any) {
+    return this.service.findForUser(req.user.id);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Lister toutes les communications' })
   findAll(@Query('status') status?: string) {
@@ -48,5 +54,20 @@ export class CommunicationsController {
   @ApiOperation({ summary: 'Supprimer une communication' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Get(':id/deliveries')
+  @ApiOperation({ summary: 'Obtenir les accusés de réception/envoi' })
+  getDeliveries(@Param('id') communicationId: string) {
+    return this.service.getDeliveries(communicationId);
+  }
+
+  @Post(':id/deliveries')
+  @ApiOperation({ summary: 'Créer les accusés de réception/envoi' })
+  createDeliveries(
+    @Param('id') communicationId: string,
+    @Body() data: any,
+  ) {
+    return this.service.createDeliveries(communicationId, data);
   }
 }

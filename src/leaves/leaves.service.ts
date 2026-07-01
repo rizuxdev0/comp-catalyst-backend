@@ -143,7 +143,7 @@ export class LeavesService {
       // Fetch Admins and Managers to notify
       try {
         const managersAndAdmins = await manager.query(
-          "SELECT id FROM users WHERE role IN ('admin', 'manager')"
+          `SELECT DISTINCT ur.user_id as id FROM user_roles ur WHERE ur.role IN ('admin', 'manager')`
         );
         this.eventEmitter.emit('leave.created', {
           adminIds: managersAndAdmins.map((u: any) => u.id),

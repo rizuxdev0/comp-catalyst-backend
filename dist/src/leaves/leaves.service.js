@@ -129,7 +129,7 @@ let LeavesService = class LeavesService {
                 newValues: data,
             });
             try {
-                const managersAndAdmins = await manager.query("SELECT id FROM users WHERE role IN ('admin', 'manager')");
+                const managersAndAdmins = await manager.query(`SELECT DISTINCT ur.user_id as id FROM user_roles ur WHERE ur.role IN ('admin', 'manager')`);
                 this.eventEmitter.emit('leave.created', {
                     adminIds: managersAndAdmins.map((u) => u.id),
                     employeeName: `${employee.first_name} ${employee.last_name}`,

@@ -2,6 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationsService } from './notifications.service';
 import { MailService } from '../mail/mail.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Employee } from '../employees/entities/employee.entity';
 
 @Injectable()
 export class NotificationsListener {
@@ -10,6 +13,8 @@ export class NotificationsListener {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly mailService: MailService,
+    @InjectRepository(Employee)
+    private readonly employeeRepo: Repository<Employee>,
   ) {}
 
   @OnEvent('leave.updated')
@@ -165,5 +170,44 @@ export class NotificationsListener {
       type: 'warning',
       category: 'contract',
     });
+  }
+
+  @OnEvent('communication.published')
+  async handleCommunicationPublished(communication: any) {
+    let targetEmployeeUserIds: string[] = [];
+
+    if (communication.recipient_type === 'all') {
+      const employees = await this.employeeRepo.find({ where: { employee_status: 'active' as any } });
+      targetEmployeeUserIds = employees.map(e => e.userId).filter(id => !!id);
+    } else if (communication.recipient_type === 'department' && communication.recipient_department_id) {
+      const employees = await this.employeeRepo.find({ 
+        where: { department_id: communication.recipient_department_id, employee_status: 'active' as any } 
+      });
+      targetEmployeeUserIds = employees.map(e => e.userId).filter(id => !!id);
+    } else if (communication.recipient_type === 'individual' && communication.recipient_employee_id) {
+      const employee = await this.employeeRepo.findOne({ where: { id: communication.recipient_employee_id } });
+      if (employee?.userId) {
+        targetEmployeeUserIds.push(employee.userId);
+      }
+    } else if (communication.recipient_type === 'employee' && communication.recipient_employee_id) {
+      // Sometimes frontend sends 'individual', sometimes backend uses 'employee'
+      const employee = await this.employeeRepo.findOne({ where: { id: communication.recipient_employee_id } });
+      if (employee?.userId) {
+        targetEmployeeUserIds.push(employee.userId);
+      }
+    }
+
+    // Remove duplicates
+    targetEmployeeUserIds = [...new Set(targetEmployeeUserIds)];
+
+    for (const userId of targetEmployeeUserIds) {
+      await this.notificationsService.create({
+        userId,
+        title: `Nouveau document : ${communication.title}`,
+        message: `Un nouveau document a été publié : ${communication.title}. Veuillez le consulter dans votre espace.`,
+        type: 'info',
+        category: 'document',
+      });
+    }
   }
 }

@@ -53,7 +53,7 @@ let CertificatesService = class CertificatesService {
         });
         const saved = await this.certRepo.save(request);
         try {
-            const managersAndAdmins = await this.dataSource.query("SELECT id FROM users WHERE role IN ('admin', 'manager')");
+            const managersAndAdmins = await this.dataSource.query(`SELECT DISTINCT ur.user_id as id FROM user_roles ur WHERE ur.role IN ('admin', 'manager')`);
             this.eventEmitter.emit('certificate.created', {
                 adminIds: managersAndAdmins.map((u) => u.id),
                 employeeName: `${employee.first_name} ${employee.last_name}`,

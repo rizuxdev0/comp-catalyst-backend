@@ -21,6 +21,9 @@ let CommunicationsController = class CommunicationsController {
     constructor(service) {
         this.service = service;
     }
+    findForEmployee(req) {
+        return this.service.findForUser(req.user.id);
+    }
     findAll(status) {
         if (status)
             return this.service.findByStatus(status);
@@ -41,8 +44,22 @@ let CommunicationsController = class CommunicationsController {
     remove(id) {
         return this.service.remove(id);
     }
+    getDeliveries(communicationId) {
+        return this.service.getDeliveries(communicationId);
+    }
+    createDeliveries(communicationId, data) {
+        return this.service.createDeliveries(communicationId, data);
+    }
 };
 exports.CommunicationsController = CommunicationsController;
+__decorate([
+    (0, common_1.Get)('me'),
+    (0, swagger_1.ApiOperation)({ summary: 'Lister les communications de l\'employé' }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], CommunicationsController.prototype, "findForEmployee", null);
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Lister toutes les communications' }),
@@ -93,6 +110,23 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CommunicationsController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)(':id/deliveries'),
+    (0, swagger_1.ApiOperation)({ summary: 'Obtenir les accusés de réception/envoi' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CommunicationsController.prototype, "getDeliveries", null);
+__decorate([
+    (0, common_1.Post)(':id/deliveries'),
+    (0, swagger_1.ApiOperation)({ summary: 'Créer les accusés de réception/envoi' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CommunicationsController.prototype, "createDeliveries", null);
 exports.CommunicationsController = CommunicationsController = __decorate([
     (0, swagger_1.ApiTags)('Communications'),
     (0, swagger_1.ApiBearerAuth)(),

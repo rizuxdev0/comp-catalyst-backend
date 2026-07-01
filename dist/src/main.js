@@ -6,6 +6,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const config_1 = require("@nestjs/config");
 const cookieParser = require("cookie-parser");
+const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const constants_1 = require("./common/constants");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
@@ -14,6 +15,7 @@ async function bootstrap() {
     const frontendPort = 5175;
     app.setGlobalPrefix(constants_1.API_PREFIX);
     app.use(cookieParser());
+    app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter(configService));
     app.useGlobalPipes(new common_1.ValidationPipe({
         transform: true,
     }));

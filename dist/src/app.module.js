@@ -72,7 +72,7 @@ exports.AppModule = AppModule = __decorate([
                     database: config.get('DATABASE_NAME'),
                     entities: [__dirname + '/**/*.entity{.ts,.js}'],
                     migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-                    synchronize: config.get('NODE_ENV') === 'development',
+                    synchronize: false,
                     logging: config.get('NODE_ENV') === 'development',
                 }),
             }),

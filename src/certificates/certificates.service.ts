@@ -46,7 +46,7 @@ export class CertificatesService {
 
     try {
       const managersAndAdmins = await this.dataSource.query(
-        "SELECT id FROM users WHERE role IN ('admin', 'manager')"
+        `SELECT DISTINCT ur.user_id as id FROM user_roles ur WHERE ur.role IN ('admin', 'manager')`
       );
       this.eventEmitter.emit('certificate.created', {
         adminIds: managersAndAdmins.map((u: any) => u.id),

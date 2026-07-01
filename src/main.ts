@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { API_PREFIX } from './common/constants';
 
 async function bootstrap() {
@@ -18,6 +19,9 @@ async function bootstrap() {
   app.setGlobalPrefix(API_PREFIX);
   
   app.use(cookieParser());
+
+  // Global Exception Filter
+  app.useGlobalFilters(new HttpExceptionFilter(configService));
 
   // Global Validation Pipe
   app.useGlobalPipes(

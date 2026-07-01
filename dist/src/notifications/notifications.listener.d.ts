@@ -1,10 +1,13 @@
 import { NotificationsService } from './notifications.service';
 import { MailService } from '../mail/mail.service';
+import { Repository } from 'typeorm';
+import { Employee } from '../employees/entities/employee.entity';
 export declare class NotificationsListener {
     private readonly notificationsService;
     private readonly mailService;
+    private readonly employeeRepo;
     private readonly logger;
-    constructor(notificationsService: NotificationsService, mailService: MailService);
+    constructor(notificationsService: NotificationsService, mailService: MailService, employeeRepo: Repository<Employee>);
     handleLeaveUpdated(payload: {
         userId: string;
         status: string;
@@ -38,4 +41,5 @@ export declare class NotificationsListener {
         daysLeft: number;
         type: string;
     }): Promise<void>;
+    handleCommunicationPublished(communication: any): Promise<void>;
 }

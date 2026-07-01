@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var NotificationsListener_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsListener = void 0;
@@ -15,10 +18,14 @@ const common_1 = require("@nestjs/common");
 const event_emitter_1 = require("@nestjs/event-emitter");
 const notifications_service_1 = require("./notifications.service");
 const mail_service_1 = require("../mail/mail.service");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const employee_entity_1 = require("../employees/entities/employee.entity");
 let NotificationsListener = NotificationsListener_1 = class NotificationsListener {
-    constructor(notificationsService, mailService) {
+    constructor(notificationsService, mailService, employeeRepo) {
         this.notificationsService = notificationsService;
         this.mailService = mailService;
+        this.employeeRepo = employeeRepo;
         this.logger = new common_1.Logger(NotificationsListener_1.name);
     }
     async handleLeaveUpdated(payload) {
@@ -147,6 +154,41 @@ let NotificationsListener = NotificationsListener_1 = class NotificationsListene
             category: 'contract',
         });
     }
+    async handleCommunicationPublished(communication) {
+        let targetEmployeeUserIds = [];
+        if (communication.recipient_type === 'all') {
+            const employees = await this.employeeRepo.find({ where: { employee_status: 'active' } });
+            targetEmployeeUserIds = employees.map(e => e.userId).filter(id => !!id);
+        }
+        else if (communication.recipient_type === 'department' && communication.recipient_department_id) {
+            const employees = await this.employeeRepo.find({
+                where: { department_id: communication.recipient_department_id, employee_status: 'active' }
+            });
+            targetEmployeeUserIds = employees.map(e => e.userId).filter(id => !!id);
+        }
+        else if (communication.recipient_type === 'individual' && communication.recipient_employee_id) {
+            const employee = await this.employeeRepo.findOne({ where: { id: communication.recipient_employee_id } });
+            if (employee?.userId) {
+                targetEmployeeUserIds.push(employee.userId);
+            }
+        }
+        else if (communication.recipient_type === 'employee' && communication.recipient_employee_id) {
+            const employee = await this.employeeRepo.findOne({ where: { id: communication.recipient_employee_id } });
+            if (employee?.userId) {
+                targetEmployeeUserIds.push(employee.userId);
+            }
+        }
+        targetEmployeeUserIds = [...new Set(targetEmployeeUserIds)];
+        for (const userId of targetEmployeeUserIds) {
+            await this.notificationsService.create({
+                userId,
+                title: `Nouveau document : ${communication.title}`,
+                message: `Un nouveau document a été publié : ${communication.title}. Veuillez le consulter dans votre espace.`,
+                type: 'info',
+                category: 'document',
+            });
+        }
+    }
 };
 exports.NotificationsListener = NotificationsListener;
 __decorate([
@@ -185,9 +227,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], NotificationsListener.prototype, "handleContractExpiring", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('communication.published'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsListener.prototype, "handleCommunicationPublished", null);
 exports.NotificationsListener = NotificationsListener = NotificationsListener_1 = __decorate([
     (0, common_1.Injectable)(),
+    __param(2, (0, typeorm_1.InjectRepository)(employee_entity_1.Employee)),
     __metadata("design:paramtypes", [notifications_service_1.NotificationsService,
-        mail_service_1.MailService])
+        mail_service_1.MailService,
+        typeorm_2.Repository])
 ], NotificationsListener);
 //# sourceMappingURL=notifications.listener.js.map
