@@ -10,6 +10,8 @@ const http_exception_filter_1 = require("./common/filters/http-exception.filter"
 const constants_1 = require("./common/constants");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.set('trust proxy', true);
     const configService = app.get(config_1.ConfigService);
     const port = configService.get('APP_PORT') || 3000;
     const frontendPort = 5175;
@@ -17,7 +19,11 @@ async function bootstrap() {
     app.use(cookieParser());
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter(configService));
     app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
         transform: true,
+        transformOptions: {
+            enableImplicitConversion: true,
+        },
     }));
     if (configService.get('NODE_ENV') !== 'production') {
         const swaggerConfig = new swagger_1.DocumentBuilder()

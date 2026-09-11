@@ -44,6 +44,16 @@ export class AuditLog {
   @ApiProperty({ required: false })
   metadata: any;
 
+  /** Client IP address captured at the time of the action */
+  @Column({ name: 'ip_address', nullable: true })
+  @ApiProperty({ example: '192.168.1.42', required: false })
+  ipAddress: string;
+
+  /** Client user agent (browser/device info) */
+  @Column({ name: 'user_agent', nullable: true })
+  @ApiProperty({ example: 'Mozilla/5.0 ...', required: false })
+  userAgent: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

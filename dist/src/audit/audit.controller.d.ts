@@ -13,6 +13,8 @@ export declare class AuditController {
         entityName: string;
         previousValues: any;
         newValues: any;
+        ipAddress: string;
+        userAgent: string;
         createdAt: Date;
     }[]>;
     create(logData: Partial<AuditLog>, req: any): Promise<AuditLog>;

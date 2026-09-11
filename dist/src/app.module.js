@@ -53,7 +53,11 @@ const attendance_module_1 = require("./attendance/attendance.module");
 const accounting_module_1 = require("./accounting/accounting.module");
 const establishments_module_1 = require("./establishments/establishments.module");
 const certificates_module_1 = require("./certificates/certificates.module");
+const request_context_middleware_1 = require("./common/middleware/request-context.middleware");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer.apply(request_context_middleware_1.RequestContextMiddleware).forRoutes('*');
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
@@ -73,6 +77,7 @@ exports.AppModule = AppModule = __decorate([
                     entities: [__dirname + '/**/*.entity{.ts,.js}'],
                     migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
                     synchronize: false,
+                    migrationsRun: config.get('MIGRATIONS_RUN') === 'true',
                     logging: config.get('NODE_ENV') === 'development',
                 }),
             }),

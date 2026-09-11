@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -46,6 +46,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { EstablishmentModule } from './establishments/establishments.module';
 import { CertificatesModule } from './certificates/certificates.module';
+import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { CertificatesModule } from './certificates/certificates.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
         synchronize: false,
+        migrationsRun: config.get<string>('MIGRATIONS_RUN') === 'true',
         logging: config.get<string>('NODE_ENV') === 'development',
       }),
     }),
@@ -115,5 +117,15 @@ import { CertificatesModule } from './certificates/certificates.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  /**
+   * Registers the RequestContextMiddleware globally on all routes.
+   * This ensures every incoming HTTP request stores the client IP
+   * and user agent in AsyncLocalStorage for audit trail enrichment.
+   */
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
+  }
+}
+
 

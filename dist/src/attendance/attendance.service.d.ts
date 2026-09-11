@@ -19,4 +19,17 @@ export declare class AttendanceService {
         estimatedAbsenceDeduction: number;
         workingDaysInMonth: number;
     }>;
+    findAllRecords(query: {
+        month?: string;
+        startDate?: string;
+        endDate?: string;
+        employeeId?: string;
+        departmentId?: string;
+        status?: string;
+    }): Promise<AttendanceRecord[]>;
+    createRecord(data: any): Promise<AttendanceRecord>;
+    updateRecord(id: string, data: any): Promise<AttendanceRecord>;
+    deleteRecord(id: string): Promise<{
+        success: boolean;
+    }>;
 }

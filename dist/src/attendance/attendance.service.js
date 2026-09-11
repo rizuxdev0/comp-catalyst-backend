@@ -103,6 +103,100 @@ let AttendanceService = class AttendanceService {
             workingDaysInMonth,
         };
     }
+    async findAllRecords(query) {
+        const qb = this.attendanceRepo
+            .createQueryBuilder('att')
+            .leftJoinAndSelect('att.employee', 'emp')
+            .orderBy('att.date', 'DESC');
+        if (query.employeeId) {
+            qb.andWhere('att.employeeId = :employeeId', { employeeId: query.employeeId });
+        }
+        if (query.departmentId && query.departmentId !== 'all') {
+            qb.andWhere('emp.departmentId = :departmentId', { departmentId: query.departmentId });
+        }
+        if (query.status && query.status !== 'all') {
+            qb.andWhere('att.status = :status', { status: query.status });
+        }
+        if (query.startDate && query.endDate) {
+            qb.andWhere('att.date BETWEEN :start AND :end', {
+                start: query.startDate,
+                end: query.endDate,
+            });
+        }
+        else if (query.month) {
+            const parts = query.month.split('-');
+            if (parts.length === 2) {
+                const year = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10);
+                const startDate = new Date(Date.UTC(year, m - 1, 1)).toISOString().split('T')[0];
+                const endDate = new Date(Date.UTC(year, m, 0)).toISOString().split('T')[0];
+                qb.andWhere('att.date BETWEEN :start AND :end', { start: startDate, end: endDate });
+            }
+        }
+        return qb.getMany();
+    }
+    async createRecord(data) {
+        let hoursWorked = data.hoursWorked ?? data.hours_worked;
+        const checkIn = data.checkIn ?? data.check_in;
+        const checkOut = data.checkOut ?? data.check_out;
+        if (hoursWorked === undefined && checkIn && checkOut) {
+            const [hIn, mIn] = checkIn.split(':').map(Number);
+            const [hOut, mOut] = checkOut.split(':').map(Number);
+            const diffMinutes = (hOut * 60 + mOut) - (hIn * 60 + mIn);
+            hoursWorked = Math.max(0, parseFloat((diffMinutes / 60).toFixed(2)));
+        }
+        const record = this.attendanceRepo.create({
+            employeeId: data.employeeId || data.employee_id,
+            date: data.date,
+            checkIn: checkIn || null,
+            checkOut: checkOut || null,
+            status: data.status || 'present',
+            hoursWorked: hoursWorked !== undefined ? Number(hoursWorked) : (data.status === 'absent' ? 0 : 8),
+            notes: data.notes || null,
+        });
+        return this.attendanceRepo.save(record);
+    }
+    async updateRecord(id, data) {
+        const record = await this.attendanceRepo.findOne({ where: { id } });
+        if (!record) {
+            throw new common_1.NotFoundException(`Enregistrement de présence avec l'ID ${id} non trouvé`);
+        }
+        const checkIn = data.checkIn ?? data.check_in;
+        const checkOut = data.checkOut ?? data.check_out;
+        const hoursWorked = data.hoursWorked ?? data.hours_worked;
+        if (checkIn !== undefined)
+            record.checkIn = checkIn;
+        if (checkOut !== undefined)
+            record.checkOut = checkOut;
+        if (data.status !== undefined)
+            record.status = data.status;
+        if (data.notes !== undefined)
+            record.notes = data.notes;
+        if (data.date !== undefined)
+            record.date = data.date;
+        if (data.employeeId !== undefined)
+            record.employeeId = data.employeeId;
+        if (data.employee_id !== undefined)
+            record.employeeId = data.employee_id;
+        if (hoursWorked !== undefined) {
+            record.hoursWorked = Number(hoursWorked);
+        }
+        else if (record.checkIn && record.checkOut) {
+            const [hIn, mIn] = record.checkIn.split(':').map(Number);
+            const [hOut, mOut] = record.checkOut.split(':').map(Number);
+            const diffMinutes = (hOut * 60 + mOut) - (hIn * 60 + mIn);
+            record.hoursWorked = Math.max(0, parseFloat((diffMinutes / 60).toFixed(2)));
+        }
+        return this.attendanceRepo.save(record);
+    }
+    async deleteRecord(id) {
+        const record = await this.attendanceRepo.findOne({ where: { id } });
+        if (!record) {
+            throw new common_1.NotFoundException(`Enregistrement de présence avec l'ID ${id} non trouvé`);
+        }
+        await this.attendanceRepo.delete(id);
+        return { success: true };
+    }
 };
 exports.AttendanceService = AttendanceService;
 exports.AttendanceService = AttendanceService = __decorate([

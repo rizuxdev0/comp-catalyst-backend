@@ -67,6 +67,16 @@ __decorate([
     __metadata("design:type", Object)
 ], AuditLog.prototype, "metadata", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'ip_address', nullable: true }),
+    (0, swagger_1.ApiProperty)({ example: '192.168.1.42', required: false }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "ipAddress", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'user_agent', nullable: true }),
+    (0, swagger_1.ApiProperty)({ example: 'Mozilla/5.0 ...', required: false }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "userAgent", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'created_at', type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], AuditLog.prototype, "createdAt", void 0);

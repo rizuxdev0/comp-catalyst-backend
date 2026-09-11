@@ -18,4 +18,10 @@ export declare class AttendanceController {
         estimatedAbsenceDeduction: number;
         workingDaysInMonth: number;
     }>;
+    findAllRecords(month?: string, startDate?: string, endDate?: string, employeeId?: string, departmentId?: string, status?: string): Promise<import("./entities/attendance-record.entity").AttendanceRecord[]>;
+    createRecord(body: any): Promise<import("./entities/attendance-record.entity").AttendanceRecord>;
+    updateRecord(id: string, body: any): Promise<import("./entities/attendance-record.entity").AttendanceRecord>;
+    deleteRecord(id: string): Promise<{
+        success: boolean;
+    }>;
 }

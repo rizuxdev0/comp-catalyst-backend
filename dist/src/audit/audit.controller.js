@@ -41,6 +41,8 @@ let AuditController = class AuditController {
             entityName: log.entityName,
             previousValues: log.oldValues,
             newValues: log.newValues,
+            ipAddress: log.ipAddress,
+            userAgent: log.userAgent,
             createdAt: log.createdAt,
         }));
     }

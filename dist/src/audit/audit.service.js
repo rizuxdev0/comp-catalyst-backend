@@ -18,12 +18,18 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const audit_log_entity_1 = require("./entities/audit-log.entity");
 const event_emitter_1 = require("@nestjs/event-emitter");
+const request_context_1 = require("../common/request-context");
 let AuditService = class AuditService {
     constructor(auditRepository) {
         this.auditRepository = auditRepository;
     }
     async log(data) {
-        const entry = this.auditRepository.create(data);
+        const { ipAddress, userAgent } = (0, request_context_1.getRequestContext)();
+        const entry = this.auditRepository.create({
+            ...data,
+            ipAddress: data.ipAddress || ipAddress,
+            userAgent: data.userAgent || userAgent,
+        });
         return this.auditRepository.save(entry);
     }
     async findAll(filters) {

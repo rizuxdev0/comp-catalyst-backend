@@ -11,6 +11,12 @@ import { API_PREFIX } from './common/constants';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Trust proxy headers (X-Forwarded-For, X-Real-IP) for accurate
+  // client IP resolution behind Docker, Nginx, or load balancers.
+  // Essential for audit trail IP tracking.
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', true);
+
   const configService = app.get(ConfigService);
   const port = configService.get<number>('APP_PORT') || 3000;
   const frontendPort = 5175;
@@ -26,7 +32,11 @@ async function bootstrap() {
   // Global Validation Pipe
   app.useGlobalPipes(
     new ValidationPipe({
+      whitelist: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 

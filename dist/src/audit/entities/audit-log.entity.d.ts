@@ -10,5 +10,7 @@ export declare class AuditLog {
     oldValues: any;
     newValues: any;
     metadata: any;
+    ipAddress: string;
+    userAgent: string;
     createdAt: Date;
 }
