@@ -65,7 +65,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             typeorm_1.TypeOrmModule.forRootAsync({
-                imports: [config_1.ConfigModule],
+                imports: [config_1.ConfigModule,],
                 inject: [config_1.ConfigService],
                 useFactory: (config) => ({
                     type: 'postgres',

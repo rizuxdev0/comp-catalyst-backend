@@ -52,7 +52,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule,],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
