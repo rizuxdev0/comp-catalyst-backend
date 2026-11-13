@@ -2,36 +2,40 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddApplicationStatusValues1711060000001 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // PostgreSQL allows ALTER TYPE ... ADD VALUE for enums
-    // We use IF NOT EXISTS to be safe (PostgreSQL 9.3+)
-    await queryRunner.query(`
-      DO $$
-      BEGIN
-        -- Add 'screening' if it doesn't exist
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_enum 
-          WHERE enumlabel = 'screening' 
-          AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'job_applications_status_enum')
-        ) THEN
-          ALTER TYPE "job_applications_status_enum" ADD VALUE 'screening' AFTER 'pending';
-        END IF;
+    // Check which enum type exists in PostgreSQL (application_status from InitialMigration or job_applications_status_enum)
+    const enumTypes = await queryRunner.query(
+      `SELECT typname FROM pg_type WHERE typname IN ('job_applications_status_enum', 'application_status')`
+    );
 
-        -- Add 'testing' if it doesn't exist
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_enum 
-          WHERE enumlabel = 'testing' 
-          AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'job_applications_status_enum')
-        ) THEN
-          ALTER TYPE "job_applications_status_enum" ADD VALUE 'testing' AFTER 'interview';
-        END IF;
-      END
-      $$;
-    `);
+    const typeNames: string[] = enumTypes.map((r: { typname: string }) => r.typname);
+
+    for (const typeName of typeNames) {
+      await queryRunner.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_enum 
+            WHERE enumlabel = 'screening' 
+            AND enumtypid = (SELECT oid FROM pg_type WHERE typname = '${typeName}')
+          ) THEN
+            ALTER TYPE "${typeName}" ADD VALUE 'screening' AFTER 'pending';
+          END IF;
+
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_enum 
+            WHERE enumlabel = 'testing' 
+            AND enumtypid = (SELECT oid FROM pg_type WHERE typname = '${typeName}')
+          ) THEN
+            ALTER TYPE "${typeName}" ADD VALUE 'testing' AFTER 'interview';
+          END IF;
+        END
+        $$;
+      `);
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // PostgreSQL does not support removing values from an enum.
-    // To revert, you'd need to recreate the type. Skipping for safety.
     console.log('Cannot remove enum values in PostgreSQL. Manual intervention required.');
   }
 }

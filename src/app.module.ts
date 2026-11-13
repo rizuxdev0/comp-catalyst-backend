@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DepartmentsModule } from './departments/departments.module';
@@ -51,6 +52,12 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    PrometheusModule.register({
+      path: '/metrics',
+      defaultMetrics: {
+        enabled: true,
+      },
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule,],
       inject: [ConfigService],
@@ -63,8 +70,8 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
         database: config.get<string>('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-        synchronize: false,
-        migrationsRun: config.get<string>('MIGRATIONS_RUN') === 'true',
+        synchronize: config.get<string>('DB_SYNCHRONIZE', 'true') === 'true',
+        migrationsRun: config.get<string>('MIGRATIONS_RUN', 'true') === 'true',
         logging: config.get<string>('NODE_ENV') === 'development',
       }),
     }),

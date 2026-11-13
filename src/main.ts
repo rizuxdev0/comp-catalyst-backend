@@ -21,8 +21,10 @@ async function bootstrap() {
   const port = configService.get<number>('APP_PORT') || 3000;
   const frontendPort = 5175;
 
-  // Global prefix
-  app.setGlobalPrefix(API_PREFIX);
+  // Global prefix with exclusion for standard Prometheus scraping endpoint
+  app.setGlobalPrefix(API_PREFIX, {
+    exclude: ['metrics'],
+  });
   
   app.use(cookieParser());
 
