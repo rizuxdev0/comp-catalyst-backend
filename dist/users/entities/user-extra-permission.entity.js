@@ -21,29 +21,29 @@ __decorate([
     __metadata("design:type", String)
 ], UserExtraPermission.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: 'user_id' }),
     __metadata("design:type", String)
 ], UserExtraPermission.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => user_entity_1.User),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
     __metadata("design:type", user_entity_1.User)
 ], UserExtraPermission.prototype, "user", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: 'permission_id' }),
     __metadata("design:type", String)
 ], UserExtraPermission.prototype, "permissionId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => permission_entity_1.Permission),
-    (0, typeorm_1.JoinColumn)({ name: 'permissionId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'permission_id' }),
     __metadata("design:type", permission_entity_1.Permission)
 ], UserExtraPermission.prototype, "permission", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true, type: 'timestamp' }),
+    (0, typeorm_1.Column)({ name: 'expires_at', nullable: true, type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], UserExtraPermission.prototype, "expiresAt", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ name: 'created_at', type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], UserExtraPermission.prototype, "createdAt", void 0);
 exports.UserExtraPermission = UserExtraPermission = __decorate([

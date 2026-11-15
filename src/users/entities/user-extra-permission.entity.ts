@@ -7,23 +7,23 @@ export class UserExtraPermission {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({ name: 'permission_id' })
   permissionId: string;
 
   @ManyToOne(() => Permission)
-  @JoinColumn({ name: 'permissionId' })
+  @JoinColumn({ name: 'permission_id' })
   permission: Permission;
 
-  @Column({ nullable: true, type: 'timestamp' })
+  @Column({ name: 'expires_at', nullable: true, type: 'timestamptz' })
   expiresAt: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

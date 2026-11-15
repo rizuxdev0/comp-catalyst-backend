@@ -36,12 +36,12 @@ __decorate([
     __metadata("design:type", String)
 ], ContractType.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: true }),
+    (0, typeorm_1.Column)({ name: 'is_permanent', default: true }),
     (0, swagger_1.ApiProperty)({ example: true, description: 'Si le contrat a une durée indéterminée' }),
     __metadata("design:type", Boolean)
 ], ContractType.prototype, "isPermanent", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: true }),
+    (0, typeorm_1.Column)({ name: 'is_active', default: true }),
     (0, swagger_1.ApiProperty)({ example: true }),
     __metadata("design:type", Boolean)
 ], ContractType.prototype, "isActive", void 0);

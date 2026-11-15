@@ -70,7 +70,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
         database: config.get<string>('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-        synchronize: config.get<string>('DB_SYNCHRONIZE', 'true') === 'true',
+        synchronize: false,
         migrationsRun: config.get<string>('MIGRATIONS_RUN', 'true') === 'true',
         logging: config.get<string>('NODE_ENV') === 'development',
       }),

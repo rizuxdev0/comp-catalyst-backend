@@ -24,19 +24,20 @@ __decorate([
     __metadata("design:type", String)
 ], AccountingMapping.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: 'rubric_name' }),
     __metadata("design:type", String)
 ], AccountingMapping.prototype, "rubricName", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: 'account_number' }),
     __metadata("design:type", String)
 ], AccountingMapping.prototype, "accountNumber", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
+    (0, typeorm_1.Column)({ name: 'account_name', nullable: true }),
     __metadata("design:type", String)
 ], AccountingMapping.prototype, "accountName", void 0);
 __decorate([
     (0, typeorm_1.Column)({
+        name: 'entry_type',
         type: 'enum',
         enum: AccountingEntryType,
         default: AccountingEntryType.DEBIT,
@@ -44,7 +45,7 @@ __decorate([
     __metadata("design:type", String)
 ], AccountingMapping.prototype, "entryType", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: true }),
+    (0, typeorm_1.Column)({ name: 'is_active', default: true }),
     __metadata("design:type", Boolean)
 ], AccountingMapping.prototype, "isActive", void 0);
 __decorate([

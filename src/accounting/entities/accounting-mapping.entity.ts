@@ -10,23 +10,24 @@ export class AccountingMapping {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'rubric_name' })
   rubricName: string; // ex: 'Salaire Brut', 'Cotisations Salariales', etc.
 
-  @Column()
+  @Column({ name: 'account_number' })
   accountNumber: string; // ex: '641000', '421000'
 
-  @Column({ nullable: true })
+  @Column({ name: 'account_name', nullable: true })
   accountName: string;
 
   @Column({
+    name: 'entry_type',
     type: 'enum',
     enum: AccountingEntryType,
     default: AccountingEntryType.DEBIT,
   })
   entryType: AccountingEntryType;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
   @CreateDateColumn({ name: 'created_at' })

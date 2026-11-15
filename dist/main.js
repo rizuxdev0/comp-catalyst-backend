@@ -45,7 +45,7 @@ async function bootstrap() {
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
-    await app.listen(port);
+    await app.listen(port, '0.0.0.0');
     const backendUrl = `http://localhost:${port}`;
     const frontendUrl = `http://localhost:${frontendPort}`;
     const swaggerUrl = `${backendUrl}/api/v1/docs`;

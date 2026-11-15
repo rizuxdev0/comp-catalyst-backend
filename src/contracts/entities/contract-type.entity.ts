@@ -19,11 +19,11 @@ export class ContractType {
   @ApiProperty({ example: 'Contrat standard sans date de fin' })
   description: string;
 
-  @Column({ default: true })
+  @Column({ name: 'is_permanent', default: true })
   @ApiProperty({ example: true, description: 'Si le contrat a une durée indéterminée' })
   isPermanent: boolean;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   @ApiProperty({ example: true })
   isActive: boolean;
 
